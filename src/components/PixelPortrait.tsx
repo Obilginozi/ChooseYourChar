@@ -1,7 +1,7 @@
 import { useState } from 'react'
 
-const SPRITE_WIDTH = 160
-const SPRITE_HEIGHT = 240
+const SPRITE_WIDTH = 192
+const SPRITE_HEIGHT = 288
 
 interface PixelPortraitProps {
   spriteSrc: string

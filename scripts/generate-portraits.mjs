@@ -1,5 +1,6 @@
 /**
- * Full-body pixel portraits — 160×240 logical → 1280×1920 PNG (K=5 from 32×48 design grid).
+ * Full-body pixel portraits — 64×96 design grid → 192×288 → 1536×2304 PNG.
+ * Detail comes from a larger logical canvas, not upscaling a tiny sprite.
  * Run: node scripts/generate-portraits.mjs
  */
 
@@ -11,9 +12,9 @@ import { PNG } from 'pngjs'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const OUT_DIR = path.join(__dirname, '../public/assets/characters')
 
-const K = 5
-const LOGICAL_W = 32
-const LOGICAL_H = 48
+const LOGICAL_W = 64
+const LOGICAL_H = 96
+const K = 3
 const OUT_W = LOGICAL_W * K
 const OUT_H = LOGICAL_H * K
 const SCALE = 8
@@ -47,6 +48,7 @@ const C = {
   k: '#8B6914',
   p: '#E8D4A8',
   w: '#F0F0F0',
+  wood: '#5C3A1E',
 }
 
 function canvas() {
@@ -55,24 +57,17 @@ function canvas() {
 
 function set(m, x, y, color) {
   if (!color || x < 0 || x >= LOGICAL_W || y < 0 || y >= LOGICAL_H) return
-  for (let dy = 0; dy < K; dy++) {
+  for (let dy = 0; dy < K; dy++)
     for (let dx = 0; dx < K; dx++) {
       const px = x * K + dx
       const py = y * K + dy
       if (px < OUT_W && py < OUT_H) m[py][px] = color
     }
-  }
 }
 
 function fill(m, x, y, w, h, color) {
   for (let dy = 0; dy < h; dy++)
     for (let dx = 0; dx < w; dx++) set(m, x + dx, y + dy, color)
-}
-
-function fillPx(m, x, y, w, h, color) {
-  for (let py = y; py < y + h; py++)
-    for (let px = x; px < x + w; px++)
-      if (px >= 0 && px < OUT_W && py >= 0 && py < OUT_H && color) m[py][px] = color
 }
 
 function outline(m, x, y, w, h, edge, inner = null) {
@@ -87,366 +82,379 @@ function outline(m, x, y, w, h, edge, inner = null) {
   }
 }
 
+function neck(m, cx, y) {
+  fill(m, cx - 4, y, 9, 4, C.K)
+}
+
 function head(m, cx, y, hair) {
-  fill(m, cx - 3, y, 7, 6, C.K)
-  fill(m, cx - 4, y + 1, 9, 4, C.K)
-  set(m, cx - 2, y + 2, C.E)
-  set(m, cx + 2, y + 2, C.E)
-  set(m, cx - 1, y + 4, C.S)
-  fill(m, cx - 4, y - 1, 9, 2, hair)
-  fill(m, cx - 3, y - 2, 7, 1, hair)
+  fill(m, cx - 6, y, 13, 10, C.K)
+  fill(m, cx - 7, y + 2, 15, 6, C.K)
+  set(m, cx - 4, y + 4, C.E)
+  set(m, cx + 4, y + 4, C.E)
+  fill(m, cx - 2, y + 7, 5, 2, C.S)
+  fill(m, cx - 8, y - 3, 17, 5, hair)
+  fill(m, cx - 6, y - 5, 13, 3, hair)
 }
 
 function legs(m, cx, y, pants, shoes = C.B) {
-  fill(m, cx - 3, y, 3, 7, pants)
-  fill(m, cx + 1, y, 3, 7, pants)
-  fill(m, cx - 3, y + 7, 3, 2, shoes)
-  fill(m, cx + 1, y + 7, 3, 2, shoes)
+  fill(m, cx - 6, y, 5, 16, pants)
+  fill(m, cx + 2, y, 5, 16, pants)
+  fill(m, cx - 6, y + 16, 5, 5, shoes)
+  fill(m, cx + 2, y + 16, 5, 5, shoes)
 }
 
-function arm(m, x, y, len, color) {
-  fill(m, x, y, 2, len, color)
-  set(m, x, y + len - 1, C.K)
-  set(m, x + 1, y + len - 1, C.K)
+function arm(m, x, y, len, color, w = 3) {
+  fill(m, x, y, w, len, color)
+  fill(m, x, y + len - 2, w, 2, C.K)
 }
 
 function body(m, cx, y, w, h, color) {
   fill(m, cx - Math.floor(w / 2), y, w, h, color)
 }
 
-function stripedShirt(m, cx, y, w, h, c1, c2, stripe = 2) {
+function stripedShirt(m, cx, y, w, h, c1, c2, stripe = 3) {
   const left = cx - Math.floor(w / 2)
-  for (let row = 0; row < h; row++) {
-    for (let col = 0; col < w; col++) {
+  for (let row = 0; row < h; row++)
+    for (let col = 0; col < w; col++)
       set(m, left + col, y + row, Math.floor(col / stripe) % 2 === 0 ? c1 : c2)
+}
+
+// ─── Props (large, outlined, iconic) ───────────────────────────────────────
+
+/** Open book — two big white pages */
+function propOpenBook(m, x, y) {
+  outline(m, x, y, 9, 14, C.M, C.W)
+  outline(m, x + 9, y, 9, 14, C.M, C.W)
+  fill(m, x + 1, y + 1, 7, 12, C.W)
+  fill(m, x + 10, y + 1, 7, 12, C.W)
+  fill(m, x + 8, y, 2, 14, C.M)
+  for (let i = 0; i < 5; i++) {
+    fill(m, x + 2, y + 3 + i * 2, 5, 1, C.p)
+    fill(m, x + 11, y + 3 + i * 2, 5, 1, C.p)
+  }
+  fill(m, x, y + 13, 18, 2, C.M)
+}
+
+/** Tall bookshelf with chunky coloured spines */
+function propBookshelf(m, x, y) {
+  outline(m, x, y, 20, 72, C.wood, '#3D2314')
+  fill(m, x + 1, y + 22, 18, 2, C.wood)
+  fill(m, x + 1, y + 44, 18, 2, C.wood)
+  const books = [
+    [2, 4, 4, 16, C.R],
+    [7, 2, 4, 18, C.Z],
+    [12, 4, 4, 16, C.G],
+    [2, 26, 5, 16, C.P],
+    [8, 24, 4, 18, C.O],
+    [13, 26, 5, 16, C.T],
+    [2, 48, 4, 20, C.N],
+    [7, 46, 5, 22, C.Y],
+    [13, 48, 5, 20, C.R],
+  ]
+  for (const [bx, by, bw, bh, col] of books) fill(m, x + bx, y + by, bw, bh, col)
+}
+
+function propStethoscope(m, cx, y) {
+  outline(m, cx - 12, y, 6, 6, C.B, C.X)
+  outline(m, cx + 7, y, 6, 6, C.B, C.X)
+  fill(m, cx - 3, y + 5, 7, 3, C.R)
+  fill(m, cx - 2, y + 8, 5, 14, C.R)
+  fill(m, cx - 5, y + 20, 11, 3, C.R)
+  outline(m, cx - 4, y + 23, 9, 8, C.B, C.X)
+  fill(m, cx - 2, y + 25, 5, 4, C.R)
+}
+
+function propDrumKit(m, x, y) {
+  fill(m, x + 10, y, 2, 28, C.X)
+  fill(m, x + 6, y - 2, 10, 3, C.O)
+  fill(m, x + 4, y - 4, 14, 2, C.Y)
+  fill(m, x + 2, y + 8, 2, 22, C.X)
+  outline(m, x - 2, y + 26, 18, 14, C.B, C.D)
+  fill(m, x + 1, y + 28, 12, 10, C.R)
+  fill(m, x + 4, y + 30, 6, 6, C.W)
+  outline(m, x + 4, y + 14, 12, 10, C.B, C.O)
+  fill(m, x + 6, y + 16, 8, 6, C.W)
+  fill(m, x + 14, y + 10, 10, 3, C.O)
+  fill(m, x + 12, y + 8, 14, 2, C.Y)
+}
+
+function propSoccerBall(m, cx, cy, r) {
+  for (let dy = -r; dy <= r; dy++) {
+    for (let dx = -r; dx <= r; dx++) {
+      if (dx * dx + dy * dy <= r * r) set(m, cx + dx, cy + dy, C.W)
     }
   }
+  fill(m, cx - 3, cy - r + 2, 6, 5, C.B)
+  fill(m, cx - r + 2, cy - 3, 5, 6, C.B)
+  fill(m, cx + r - 7, cy - 3, 5, 6, C.B)
+  fill(m, cx - 6, cy + 2, 6, 5, C.B)
+  fill(m, cx + 1, cy + 2, 6, 5, C.B)
+  fill(m, cx - 3, cy - 5, 6, 4, C.B)
 }
 
-/** Open book in hands */
-function drawOpenBook(m, x, y) {
-  fill(m, x, y, 4, 7, C.W)
-  fill(m, x + 4, y, 4, 7, C.W)
-  fill(m, x + 1, y + 1, 2, 5, C.p)
-  fill(m, x + 5, y + 1, 2, 5, C.p)
-  fill(m, x + 3, y, 1, 7, C.M)
-  fill(m, x + 4, y, 1, 7, C.M)
-  for (let i = 0; i < 4; i++) {
-    set(m, x + 1, y + 2 + i, C.S)
-    set(m, x + 5, y + 2 + i, C.S)
+function propLaptop(m, x, y) {
+  outline(m, x, y, 18, 12, C.B, C.D)
+  for (let r = 0; r < 5; r++)
+    for (let c = 0; c < 7; c++)
+      set(m, x + 3 + c, y + 2 + r, r < 2 ? C.Z : C.J)
+  outline(m, x - 1, y + 12, 22, 4, C.B, C.V)
+  fill(m, x + 8, y + 16, 4, 3, C.X)
+}
+
+function propMonitor(m, x, y) {
+  outline(m, x, y, 20, 14, C.B, C.D)
+  for (let r = 0; r < 6; r++)
+    for (let c = 0; c < 8; c++)
+      set(m, x + 4 + c, y + 3 + r, r < 3 ? C.Z : C.J)
+  fill(m, x + 8, y + 14, 4, 5, C.X)
+  fill(m, x + 4, y + 19, 12, 2, C.X)
+}
+
+function propTesbih(m, x, y) {
+  for (let i = 0; i < 14; i++) {
+    const col = i % 4 === 0 ? C.Y : C.Q
+    outline(m, x, y + i, 3, 3, C.B, col)
   }
+  outline(m, x - 1, y + 14, 5, 6, C.B, C.Y)
 }
 
-/** Bookshelf on the right */
-function drawBookshelf(m, x0, y0) {
-  outline(m, x0, y0, 11, 30, C.M, '#4A2C17')
-  fill(m, x0 + 1, y0 + 9, 9, 1, C.M)
-  fill(m, x0 + 1, y0 + 19, 9, 1, C.M)
-  const books = [
-    [2, 2, 2, 7, C.R],
-    [4, 1, 2, 8, C.Z],
-    [6, 2, 2, 7, C.G],
-    [8, 1, 2, 8, C.Y],
-    [2, 11, 3, 8, C.P],
-    [5, 10, 2, 9, C.O],
-    [7, 11, 3, 8, C.T],
-    [2, 21, 2, 8, C.N],
-    [4, 20, 3, 9, C.M],
-    [7, 21, 3, 8, C.R],
-  ]
-  for (const [bx, by, bw, bh, col] of books) fill(m, x0 + bx, y0 + by, bw, bh, col)
+function propBookStack(m, x, y) {
+  outline(m, x, y + 14, 10, 4, C.B, C.R)
+  outline(m, x + 1, y + 9, 9, 4, C.B, C.Z)
+  outline(m, x, y + 4, 10, 4, C.B, C.G)
+  outline(m, x + 1, y, 8, 4, C.B, C.M)
 }
 
-/** Stethoscope around neck */
-function drawStethoscope(m, cx, y) {
-  fill(m, cx - 7, y, 3, 3, C.X)
-  fill(m, cx + 5, y, 3, 3, C.X)
-  fill(m, cx - 6, y + 1, 2, 2, C.R)
-  fill(m, cx + 6, y + 1, 2, 2, C.R)
-  fill(m, cx - 2, y + 2, 5, 2, C.R)
-  fill(m, cx - 1, y + 4, 3, 8, C.R)
-  fill(m, cx - 3, y + 11, 7, 2, C.R)
-  outline(m, cx - 2, y + 13, 5, 5, C.X, C.R)
-  fill(m, cx - 1, y + 15, 3, 2, C.S)
+function propChalkboard(m, x, y) {
+  outline(m, x, y, 20, 28, C.wood, C.G)
+  fill(m, x + 3, y + 6, 14, 2, C.W)
+  fill(m, x + 3, y + 12, 10, 2, C.W)
+  fill(m, x + 3, y + 18, 12, 2, C.W)
+  fill(m, x + 2, y + 28, 16, 3, C.wood)
 }
 
-/** Drum kit on the right */
-function drawDrumKit(m, x0, y0) {
-  fill(m, x0 + 9, y0, 1, 14, C.X)
-  fill(m, x0 + 7, y0 - 1, 5, 2, C.O)
-  fill(m, x0 + 6, y0 - 2, 7, 1, C.Y)
-  fill(m, x0 + 3, y0 + 5, 1, 12, C.X)
-  fill(m, x0 + 10, y0 + 3, 1, 10, C.X)
-  outline(m, x0 - 1, y0 + 14, 11, 8, C.B, C.D)
-  fill(m, x0 + 1, y0 + 15, 7, 6, C.R)
-  fill(m, x0 + 2, y0 + 16, 5, 4, C.W)
-  outline(m, x0 + 2, y0 + 9, 7, 5, C.B, C.O)
-  fill(m, x0 + 3, y0 + 10, 5, 3, C.W)
-  fill(m, x0 + 8, y0 + 7, 5, 2, C.O)
-  fill(m, x0 + 7, y0 + 6, 7, 1, C.Y)
-  fill(m, x0 + 11, y0 + 10, 4, 4, C.B)
-  fill(m, x0 + 12, y0 + 11, 2, 2, C.R)
+function propDumbbell(m, x, y) {
+  outline(m, x, y + 3, 5, 8, C.B, C.X)
+  fill(m, x + 5, y + 5, 8, 4, C.X)
+  outline(m, x + 13, y + 3, 5, 8, C.B, C.X)
 }
 
-/** Laptop + desk monitor */
-function drawTechDesk(m, x0, y0) {
-  outline(m, x0, y0, 11, 8, C.B, C.D)
-  for (let r = 0; r < 4; r++)
-    for (let c = 0; c < 6; c++)
-      set(m, x0 + 2 + c, y0 + 2 + r, r < 2 ? C.Z : C.J)
-  fill(m, x0 + 4, y0 + 8, 3, 3, C.X)
-  fill(m, x0 + 2, y0 + 11, 7, 1, C.X)
-  outline(m, x0 - 2, y0 + 12, 15, 2, C.B, C.V)
+function propBackpack(m, x, y) {
+  outline(m, x, y, 14, 20, C.B, C.A)
+  fill(m, x + 3, y + 3, 8, 6, C.T)
+  fill(m, x + 2, y + 10, 10, 8, C.A)
+  outline(m, x + 15, y + 4, 8, 7, C.B, C.D)
+  fill(m, x + 17, y + 6, 4, 3, C.Z)
+  fill(m, x + 16, y + 3, 6, 2, C.X)
 }
 
-/** Prayer beads */
-function drawTesbih(m, x, y, len) {
-  for (let i = 0; i < len; i++) {
-    set(m, x, y + i, i % 3 === 0 ? C.Y : C.Q)
-    set(m, x + 1, y + i, C.Y)
-  }
-  fill(m, x, y + len, 2, 3, C.Y)
+function propMicrophone(m, x, y) {
+  fill(m, x, y, 3, 16, C.X)
+  outline(m, x - 2, y + 16, 7, 4, C.B, C.X)
+  outline(m, x - 3, y - 4, 9, 6, C.B, C.D)
+  fill(m, x - 1, y - 2, 5, 3, C.X)
 }
 
-/** Stack of books */
-function drawBookStack(m, x, y) {
-  fill(m, x, y + 6, 6, 2, C.R)
-  fill(m, x + 1, y + 4, 5, 2, C.Z)
-  fill(m, x, y + 2, 6, 2, C.G)
-  fill(m, x + 1, y, 5, 2, C.M)
+function propSpotlight(m, x, y) {
+  fill(m, x, y + 6, 3, 14, C.X)
+  outline(m, x - 2, y + 20, 7, 4, C.B, C.X)
+  fill(m, x + 6, y, 14, 10, C.Y)
+  fill(m, x + 8, y + 2, 10, 6, '#FFFACD')
 }
 
-/** Chalkboard */
-function drawChalkboard(m, x0, y0) {
-  outline(m, x0, y0, 11, 14, C.M, C.G)
-  fill(m, x0 + 2, y0 + 3, 7, 1, C.W)
-  fill(m, x0 + 2, y0 + 6, 5, 1, C.W)
-  fill(m, x0 + 2, y0 + 9, 6, 1, C.W)
-  fill(m, x0 + 1, y0 + 14, 9, 2, C.M)
+function propClipboard(m, x, y) {
+  outline(m, x, y, 8, 12, C.B, C.W)
+  fill(m, x + 2, y + 2, 4, 1, C.R)
+  fill(m, x + 2, y + 5, 4, 1, C.R)
+  fill(m, x + 2, y + 8, 4, 1, C.R)
 }
 
-/** Dumbbells */
-function drawDumbbell(m, x, y) {
-  fill(m, x, y + 2, 3, 4, C.X)
-  fill(m, x + 3, y + 3, 5, 2, C.X)
-  fill(m, x + 8, y + 2, 3, 4, C.X)
-  fill(m, x, y + 3, 2, 2, C.B)
-  fill(m, x + 9, y + 3, 2, 2, C.B)
+function propMap(m, x, y) {
+  outline(m, x, y, 10, 8, C.B, C.w)
+  fill(m, x + 2, y + 2, 3, 2, C.G)
+  fill(m, x + 5, y + 3, 3, 2, C.Z)
+  fill(m, x + 3, y + 5, 4, 2, C.T)
 }
 
-/** Backpack + camera */
-function drawTravelGear(m, x0, y0) {
-  outline(m, x0, y0, 8, 12, C.A, '#8B6914')
-  fill(m, x0 + 2, y0 + 2, 4, 3, C.T)
-  fill(m, x0 + 1, y0 + 6, 6, 4, C.A)
-  outline(m, x0 + 9, y0 + 4, 5, 4, C.B, C.D)
-  fill(m, x0 + 10, y0 + 5, 3, 2, C.Z)
-  fill(m, x0 + 9, y0 + 3, 5, 1, C.X)
-}
-
-/** Microphone + spotlight */
-function drawStageProps(m, x0, y0) {
-  fill(m, x0, y0, 2, 10, C.X)
-  fill(m, x0 - 1, y0 + 10, 4, 3, C.X)
-  fill(m, x0 - 2, y0, 5, 4, C.D)
-  fill(m, x0 - 1, y0 + 1, 3, 2, C.X)
-  fill(m, x0 + 5, y0 - 4, 8, 6, C.Y)
-  fill(m, x0 + 6, y0 - 3, 6, 4, '#FFF8DC')
-}
-
-/** Soccer ball — pixel coords */
-function drawSoccerBallPx(m, cx, cy, r) {
-  fillPx(m, cx - r, cy - r, r * 2, r * 2, C.W)
-  const blk = (x, y, w, h) => fillPx(m, x, y, w, h, C.B)
-  blk(cx - 5, cy - r + 5, 10, 7)
-  blk(cx - r + 5, cy - 5, 7, 10)
-  blk(cx + r - 12, cy - 5, 7, 10)
-  blk(cx - 12, cy + 3, 10, 7)
-  blk(cx + 2, cy + 3, 10, 7)
-  blk(cx - 5, cy - 8, 10, 6)
-  fillPx(m, cx - 4, cy - 4, 8, 8, C.B)
-}
+// ─── Characters ──────────────────────────────────────────────────────────────
 
 function drawFilozof() {
   const m = canvas()
-  const cx = 10
-  fill(m, cx - 4, 5, 9, 3, C.H)
-  head(m, cx, 7, C.H)
-  fill(m, cx - 4, 10, 8, 4, C.H)
-  body(m, cx, 15, 11, 16, C.U)
-  fill(m, cx - 6, 16, 2, 12, C.U)
-  fill(m, cx + 5, 17, 2, 10, C.U)
-  arm(m, cx - 7, 17, 5, C.U)
-  arm(m, cx + 5, 18, 4, C.U)
-  drawOpenBook(m, cx - 10, 19)
-  legs(m, cx, 31, C.U, C.k)
-  drawBookshelf(m, 20, 4)
+  const cx = 20
+  fill(m, cx - 8, 12, 16, 8, C.H)
+  head(m, cx, 14, C.H)
+  neck(m, cx, 24)
+  fill(m, cx - 7, 24, 14, 6, C.H)
+  body(m, cx, 30, 18, 22, C.U)
+  fill(m, cx - 10, 32, 3, 18, C.U)
+  fill(m, cx + 8, 33, 3, 16, C.U)
+  arm(m, cx - 13, 32, 12, C.U)
+  arm(m, cx + 11, 34, 10, C.U)
+  propOpenBook(m, cx - 16, 38)
+  legs(m, cx, 54, C.U, C.k)
+  propBookshelf(m, 42, 10)
   return m
 }
 
 function drawMuhendis() {
   const m = canvas()
-  const cx = 10
-  fill(m, cx - 5, 3, 11, 4, C.O)
-  fill(m, cx - 1, 2, 3, 2, C.O)
-  head(m, cx, 8, C.H)
-  fill(m, cx - 5, 14, 10, 12, C.V)
-  fill(m, cx - 4, 15, 8, 2, C.O)
-  arm(m, cx - 7, 16, 8, C.V)
-  arm(m, cx + 5, 15, 5, C.V)
-  outline(m, cx + 2, 16, 7, 6, C.B, C.D)
-  for (let r = 0; r < 3; r++)
-    for (let c = 0; c < 4; c++)
-      set(m, cx + 3 + c, 17 + r, r === 0 ? C.Z : C.J)
-  legs(m, cx, 28, C.B)
-  drawTechDesk(m, 19, 8)
+  const cx = 20
+  fill(m, cx - 8, 6, 16, 6, C.O)
+  fill(m, cx - 2, 4, 5, 3, C.O)
+  head(m, cx, 16, C.H)
+  neck(m, cx, 26)
+  body(m, cx, 30, 18, 20, C.V)
+  fill(m, cx - 6, 31, 12, 4, C.O)
+  arm(m, cx - 13, 32, 11, C.V)
+  arm(m, cx + 11, 30, 8, C.V)
+  propLaptop(m, cx + 4, 32)
+  legs(m, cx, 52, C.B)
+  propMonitor(m, 42, 14)
   return m
 }
 
 function drawImam() {
   const m = canvas()
-  const cx = 16
-  fill(m, cx - 7, 0, 15, 10, C.W)
-  fill(m, cx - 3, 0, 7, 3, C.Y)
-  fill(m, cx - 1, -1, 3, 2, C.Y)
-  head(m, cx, 9, C.H)
-  fill(m, cx - 7, 14, 15, 17, C.G)
-  fill(m, cx - 6, 15, 13, 4, C.Y)
-  arm(m, cx - 9, 17, 10, C.G)
-  arm(m, cx + 8, 17, 10, C.G)
-  drawTesbih(m, cx + 10, 17, 11)
-  legs(m, cx, 31, C.G, C.k)
+  const cx = 32
+  fill(m, cx - 10, 2, 20, 16, C.W)
+  fill(m, cx - 4, 0, 9, 5, C.Y)
+  head(m, cx, 18, C.H)
+  neck(m, cx, 28)
+  body(m, cx, 32, 22, 24, C.G)
+  fill(m, cx - 8, 33, 16, 6, C.Y)
+  arm(m, cx - 14, 34, 14, C.G)
+  arm(m, cx + 12, 34, 14, C.G)
+  propTesbih(m, cx + 14, 36)
+  legs(m, cx, 56, C.G, C.k)
   return m
 }
 
 function drawAkademisyen() {
   const m = canvas()
-  const cx = 10
-  fill(m, cx - 7, 3, 15, 4, C.M)
-  fill(m, cx - 2, 2, 5, 3, C.Y)
-  fill(m, cx, 1, 1, 4, C.Y)
-  head(m, cx, 8, C.H)
-  set(m, cx - 3, 10, C.E)
-  set(m, cx - 2, 10, C.W)
-  set(m, cx + 2, 10, C.E)
-  set(m, cx + 3, 10, C.W)
-  fill(m, cx - 5, 14, 11, 17, C.M)
-  fill(m, cx - 4, 15, 9, 3, C.Y)
-  arm(m, cx - 7, 16, 9, C.M)
-  arm(m, cx + 6, 16, 9, C.M)
-  drawBookStack(m, cx - 12, 20)
-  legs(m, cx, 31, C.B)
-  drawChalkboard(m, 20, 6)
+  const cx = 20
+  fill(m, cx - 10, 6, 20, 6, C.M)
+  fill(m, cx - 3, 4, 7, 4, C.Y)
+  fill(m, cx, 2, 2, 6, C.Y)
+  head(m, cx, 16, C.H)
+  neck(m, cx, 26)
+  set(m, cx - 5, 20, C.E)
+  set(m, cx - 3, 20, C.W)
+  set(m, cx + 3, 20, C.E)
+  set(m, cx + 5, 20, C.W)
+  body(m, cx, 30, 20, 24, C.M)
+  fill(m, cx - 7, 31, 14, 5, C.Y)
+  arm(m, cx - 14, 32, 12, C.M)
+  arm(m, cx + 12, 32, 12, C.M)
+  propBookStack(m, 2, 38)
+  legs(m, cx, 56, C.B)
+  propChalkboard(m, 42, 12)
   return m
 }
 
 function drawMuzisyen() {
   const m = canvas()
-  const cx = 9
-  fill(m, cx - 6, 6, 13, 4, C.P)
-  fill(m, cx - 7, 8, 2, 4, C.P)
-  fill(m, cx + 5, 8, 2, 4, C.P)
-  head(m, cx, 9, C.H)
-  fill(m, cx - 4, 14, 9, 9, C.L)
-  arm(m, cx - 7, 15, 6, C.L)
-  arm(m, cx + 5, 14, 6, C.L)
-  fill(m, cx - 9, 14, 2, 8, C.D)
-  fill(m, cx - 8, 13, 1, 2, C.X)
-  set(m, cx - 8, 16, C.K)
-  set(m, cx + 7, 15, C.K)
-  fill(m, cx - 2, 20, 5, 2, C.R)
-  legs(m, cx, 30, C.B)
-  drawDrumKit(m, 17, 5)
+  const cx = 18
+  fill(m, cx - 9, 8, 18, 6, C.P)
+  fill(m, cx - 10, 12, 3, 5, C.P)
+  fill(m, cx + 7, 12, 3, 5, C.P)
+  head(m, cx, 18, C.H)
+  neck(m, cx, 28)
+  body(m, cx, 32, 16, 18, C.L)
+  arm(m, cx - 12, 33, 10, C.L)
+  arm(m, cx + 10, 32, 10, C.L)
+  propMicrophone(m, cx - 16, 30)
+  fill(m, cx - 3, 42, 7, 3, C.R)
+  legs(m, cx, 52, C.B)
+  propDrumKit(m, 38, 10)
   return m
 }
 
 function drawFenerbahceli() {
   const m = canvas()
-  const cx = 13
-  fill(m, cx - 5, 3, 11, 4, C.F)
-  fill(m, cx - 1, 2, 3, 2, C.F)
-  head(m, cx, 9, C.H)
-  stripedShirt(m, cx, 14, 12, 10, C.F, C.N, 2)
-  stripedShirt(m, cx, 24, 12, 5, C.F, C.N, 2)
-  fill(m, cx - 8, 14, 2, 14, C.F)
-  fill(m, cx + 7, 14, 2, 14, C.N)
-  arm(m, cx - 10, 16, 8, C.F)
-  arm(m, cx + 9, 16, 8, C.N)
-  legs(m, cx, 29, C.N)
-  fill(m, cx - 4, 28, 4, 2, C.F)
-  fill(m, cx + 1, 28, 4, 2, C.N)
-  fill(m, cx + 3, 35, 3, 2, C.F)
+  const cx = 22
+  fill(m, cx - 8, 6, 16, 6, C.F)
+  head(m, cx, 16, C.H)
+  neck(m, cx, 26)
+  stripedShirt(m, cx, 30, 18, 14, C.F, C.N, 3)
+  stripedShirt(m, cx, 44, 18, 8, C.F, C.N, 3)
+  fill(m, cx - 11, 30, 3, 20, C.F)
+  fill(m, cx + 9, 30, 3, 20, C.N)
+  arm(m, cx - 14, 32, 10, C.F)
+  arm(m, cx + 12, 32, 10, C.N)
+  legs(m, cx, 54, C.N)
+  fill(m, cx - 5, 52, 5, 3, C.F)
+  fill(m, cx + 1, 52, 5, 3, C.N)
+  fill(m, 0, 88, 64, 8, C.k)
+  propSoccerBall(m, 48, 82, 10)
   return m
 }
 
 function drawSporcu() {
   const m = canvas()
-  const cx = 16
-  fill(m, cx - 6, 4, 13, 3, C.R)
-  fill(m, cx - 5, 5, 11, 2, C.Y)
-  head(m, cx, 8, C.H)
-  fill(m, cx - 5, 14, 11, 11, C.R)
-  fill(m, cx - 4, 15, 9, 3, C.Y)
-  arm(m, cx - 9, 15, 4, C.R)
-  arm(m, cx + 8, 15, 4, C.R)
-  drawDumbbell(m, cx - 14, 12)
-  drawDumbbell(m, cx + 10, 12)
-  legs(m, cx, 27, C.B)
-  fill(m, cx - 3, 27, 7, 2, C.R)
+  const cx = 32
+  fill(m, cx - 10, 8, 20, 5, C.R)
+  fill(m, cx - 8, 10, 16, 3, C.Y)
+  head(m, cx, 18, C.H)
+  neck(m, cx, 28)
+  body(m, cx, 32, 18, 18, C.R)
+  fill(m, cx - 6, 33, 12, 5, C.Y)
+  arm(m, cx - 14, 33, 8, C.R)
+  arm(m, cx + 12, 33, 8, C.R)
+  propDumbbell(m, cx - 24, 28)
+  propDumbbell(m, cx + 14, 28)
+  legs(m, cx, 52, C.B)
+  fill(m, cx - 5, 50, 10, 3, C.R)
   return m
 }
 
 function drawGezgin() {
   const m = canvas()
-  const cx = 11
-  fill(m, cx - 8, 3, 17, 5, C.A)
-  fill(m, cx - 2, 2, 5, 2, C.A)
-  head(m, cx, 9, C.H)
-  fill(m, cx - 4, 14, 9, 12, C.T)
-  arm(m, cx - 7, 15, 9, C.T)
-  arm(m, cx + 6, 15, 7, C.T)
-  legs(m, cx, 27, C.B)
-  fill(m, cx - 2, 27, 5, 2, C.T)
-  drawTravelGear(m, 19, 10)
-  fill(m, cx - 11, 22, 5, 4, C.w)
-  set(m, cx - 10, 23, C.R)
-  set(m, cx - 8, 23, C.R)
+  const cx = 20
+  fill(m, cx - 12, 6, 24, 7, C.A)
+  fill(m, cx - 3, 4, 7, 3, C.A)
+  head(m, cx, 18, C.H)
+  neck(m, cx, 28)
+  body(m, cx, 32, 16, 18, C.T)
+  arm(m, cx - 12, 33, 12, C.T)
+  arm(m, cx + 10, 33, 10, C.T)
+  propMap(m, cx - 18, 36)
+  legs(m, cx, 52, C.B)
+  propBackpack(m, 42, 22)
   return m
 }
 
 function drawSakamatik() {
   const m = canvas()
-  const cx = 11
-  fill(m, cx - 6, 8, 13, 4, C.B)
-  head(m, cx, 9, C.H)
-  set(m, cx - 3, 11, C.D)
-  set(m, cx + 3, 11, C.D)
-  fill(m, cx - 4, 13, 8, 2, C.W)
-  fill(m, cx - 5, 15, 11, 11, C.Z)
-  fill(m, cx - 4, 16, 9, 2, C.R)
-  arm(m, cx - 7, 16, 8, C.Z)
-  arm(m, cx + 6, 16, 8, C.R)
-  fill(m, cx + 7, 14, 2, 6, C.D)
-  fill(m, cx + 6, 13, 4, 2, C.X)
-  legs(m, cx, 27, C.B)
-  drawStageProps(m, 20, 4)
+  const cx = 20
+  fill(m, cx - 10, 18, 20, 5, C.B)
+  head(m, cx, 18, C.H)
+  neck(m, cx, 28)
+  set(m, cx - 6, 22, C.D)
+  set(m, cx + 6, 22, C.D)
+  fill(m, cx - 5, 25, 10, 3, C.W)
+  body(m, cx, 32, 18, 18, C.Z)
+  fill(m, cx - 6, 34, 12, 4, C.R)
+  arm(m, cx - 12, 33, 10, C.Z)
+  arm(m, cx + 10, 33, 10, C.R)
+  propMicrophone(m, cx + 10, 28)
+  legs(m, cx, 52, C.B)
+  propSpotlight(m, 42, 8)
   return m
 }
 
 function drawUzmanDoktor() {
   const m = canvas()
-  const cx = 16
-  head(m, cx, 8, C.H)
-  fill(m, cx - 6, 14, 13, 17, C.I)
-  fill(m, cx - 5, 15, 11, 3, C.Z)
-  arm(m, cx - 8, 16, 10, C.I)
-  arm(m, cx + 7, 16, 10, C.I)
-  drawStethoscope(m, cx, 12)
-  outline(m, cx + 8, 20, 5, 7, C.W, C.I)
-  fill(m, cx + 9, 21, 3, 1, C.R)
-  fill(m, cx + 9, 23, 3, 1, C.R)
-  legs(m, cx, 31, C.B)
-  fill(m, cx - 4, 30, 9, 2, C.I)
+  const cx = 32
+  head(m, cx, 16, C.H)
+  neck(m, cx, 26)
+  body(m, cx, 30, 20, 24, C.I)
+  fill(m, cx - 7, 31, 14, 6, C.Z)
+  arm(m, cx - 14, 32, 12, C.I)
+  arm(m, cx + 12, 32, 12, C.I)
+  propStethoscope(m, cx, 24)
+  propClipboard(m, cx + 12, 38)
+  legs(m, cx, 56, C.B)
+  fill(m, cx - 6, 54, 12, 4, C.I)
   return m
 }
 
@@ -463,23 +471,8 @@ const SPRITES = {
   uzman_doktor: drawUzmanDoktor,
 }
 
-function postProcess(id, m) {
-  switch (id) {
-    case 'fenerbahceli': {
-      drawSoccerBallPx(m, 118, OUT_H - 58, 30)
-      fillPx(m, 4, OUT_H - 12, OUT_W - 8, 12, C.k)
-      fillPx(m, 105, OUT_H - 14, 36, 8, C.S)
-      break
-    }
-    default:
-      break
-  }
-}
-
-function buildSprite(draw, id) {
-  const m = draw()
-  postProcess(id, m)
-  return m
+function buildSprite(draw) {
+  return draw()
 }
 
 function hexToRgba(hex) {
@@ -515,6 +508,6 @@ function writePng(matrix, filePath) {
 fs.mkdirSync(OUT_DIR, { recursive: true })
 
 for (const [id, draw] of Object.entries(SPRITES)) {
-  writePng(buildSprite(draw, id), path.join(OUT_DIR, `${id}.png`))
+  writePng(buildSprite(draw), path.join(OUT_DIR, `${id}.png`))
   console.log(`✓ ${id}.png (${OUT_W}×${OUT_H} → ${OUT_W * SCALE}×${OUT_H * SCALE})`)
 }
