@@ -62,8 +62,11 @@ On iOS Safari or Android Chrome, use **Add to Home Screen** after visiting the d
 
 1. Push this repo to GitHub (`main` branch).
 2. Open the repo on GitHub → **Settings** → **Pages**.
-3. Under **Build and deployment**, set **Source** to **GitHub Actions**.
-4. The workflow in [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) runs automatically on every push to `main`.
+3. Under **Build and deployment**, set **Source** to **Deploy from a branch**.
+4. Set **Branch** to `gh-pages` and folder to `/ (root)`, then **Save**.
+5. Every push to `main` runs the deploy workflow, which builds the app and publishes `dist/` to the `gh-pages` branch.
+
+> **Important:** Do **not** use `main` as the Pages branch — that serves raw source files and causes 404 errors for `main.tsx`.
 
 ### Manual deploy
 
@@ -87,4 +90,4 @@ git commit -m "Initial commit: Choose Your Character site"
 git push -u origin main
 ```
 
-Then enable **GitHub Actions** as the Pages source (step 3 above). The first workflow run may need you to approve the `github-pages` environment if GitHub prompts you.
+Then enable Pages (step 3–4 above). The first workflow run creates the `gh-pages` branch automatically.
