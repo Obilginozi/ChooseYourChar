@@ -10,9 +10,9 @@ import { PNG } from 'pngjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const OUT_DIR = path.join(__dirname, '../public/assets/characters')
-const WIDTH = 32
-const HEIGHT = 48
-const SCALE = 8
+const LOGICAL_W = 32
+const LOGICAL_H = 48
+const SCALE = 6
 
 const C = {
   K: '#F5E6C8',
@@ -44,11 +44,11 @@ const C = {
 }
 
 function canvas() {
-  return Array.from({ length: HEIGHT }, () => Array(WIDTH).fill(null))
+  return Array.from({ length: LOGICAL_H }, () => Array(LOGICAL_W).fill(null))
 }
 
 function set(m, x, y, color) {
-  if (y >= 0 && y < HEIGHT && x >= 0 && x < WIDTH && color) m[y][x] = color
+  if (y >= 0 && y < LOGICAL_H && x >= 0 && x < LOGICAL_W && color) m[y][x] = color
 }
 
 function fill(m, x, y, w, h, color) {
@@ -370,6 +370,129 @@ const SPRITES = {
   uzman_doktor: drawUzmanDoktor,
 }
 
+function upscale2x(matrix) {
+  const h = matrix.length
+  const w = matrix[0].length
+  const out = Array.from({ length: h * 2 }, () => Array(w * 2).fill(null))
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const c = matrix[y][x]
+      if (!c) continue
+      for (let dy = 0; dy < 2; dy++) {
+        for (let dx = 0; dx < 2; dx++) {
+          out[y * 2 + dy][x * 2 + dx] = c
+        }
+      }
+    }
+  }
+  return out
+}
+
+/** Extra detail at 64×96 after upscale */
+function enhance(id, m) {
+  const cx = 32
+  const s = (x, y, c) => {
+    if (y >= 0 && y < m.length && x >= 0 && x < m[0].length) m[y][x] = c
+  }
+  const f = (x, y, w, h, c) => {
+    for (let dy = 0; dy < h; dy++)
+      for (let dx = 0; dx < w; dx++) s(x + dx, y + dy, c)
+  }
+
+  switch (id) {
+    case 'filozof':
+      f(cx - 20, 38, 10, 24, C.Q)
+      for (let i = 0; i < 10; i++) s(cx - 18, 42 + i * 2, C.S)
+      s(cx - 17, 40, C.k)
+      break
+    case 'muhendis':
+      f(cx + 10, 30, 18, 14, C.B)
+      f(cx + 12, 32, 14, 10, C.D)
+      for (let row = 0; row < 4; row++)
+        for (let col = 0; col < 5; col++)
+          s(cx + 13 + col * 2, 34 + row * 2, row < 2 ? C.Z : C.J)
+      f(cx + 12, 42, 14, 2, C.X)
+      break
+    case 'imam':
+      f(cx - 12, 0, 24, 18, C.W)
+      f(cx - 8, 0, 16, 4, C.Y)
+      for (let i = 0; i < 12; i++) {
+        s(cx + 18, 34 + i, i % 2 === 0 ? C.Y : C.Q)
+        s(cx + 20, 34 + i, C.Y)
+        s(cx + 22, 36 + i, C.Q)
+      }
+      break
+    case 'akademisyen':
+      f(cx - 22, 40, 10, 18, C.M)
+      f(cx - 20, 42, 6, 14, C.I)
+      f(cx - 14, 42, 2, 14, C.R)
+      s(cx - 6, 20, C.W)
+      s(cx - 4, 20, C.E)
+      s(cx + 6, 20, C.E)
+      s(cx + 8, 20, C.W)
+      break
+    case 'muzisyen':
+      f(cx - 20, 42, 40, 2, C.X)
+      f(cx - 18, 46, 12, 14, C.B)
+      f(cx + 8, 46, 12, 14, C.B)
+      f(cx - 14, 44, 8, 4, C.O)
+      f(cx + 10, 44, 8, 4, C.O)
+      f(cx - 4, 44, 10, 6, C.R)
+      s(cx - 16, 40, C.Y)
+      s(cx + 16, 40, C.Y)
+      s(cx, 40, C.Y)
+      f(cx - 16, 38, 4, 4, C.Y)
+      f(cx + 14, 38, 4, 4, C.Y)
+      break
+    case 'fenerbahceli':
+      s(cx - 2, 34, C.F)
+      s(cx + 2, 34, C.F)
+      s(cx, 36, C.N)
+      f(cx - 20, 28, 8, 28, C.F)
+      f(cx - 18, 32, 4, 20, C.N)
+      break
+    case 'sporcu':
+      f(cx - 26, 26, 10, 10, C.X)
+      f(cx - 24, 28, 6, 6, C.B)
+      f(cx + 16, 26, 10, 10, C.X)
+      f(cx + 18, 28, 6, 6, C.B)
+      s(cx - 26, 30, C.B)
+      s(cx + 20, 30, C.B)
+      f(cx - 10, 36, 20, 2, C.Y)
+      break
+    case 'gezgin':
+      f(cx + 10, 30, 8, 8, C.B)
+      f(cx + 11, 31, 6, 5, C.Z)
+      f(cx - 20, 38, 10, 14, C.A)
+      f(cx - 18, 48, 6, 8, C.K)
+      s(cx - 16, 42, C.Z)
+      break
+    case 'sakamatik':
+      f(cx - 6, 22, 12, 4, C.B)
+      f(cx + 14, 34, 4, 16, C.B)
+      f(cx + 13, 36, 6, 12, C.X)
+      f(cx - 18, 36, 10, 8, C.Y)
+      f(cx - 16, 42, 6, 6, C.W)
+      break
+    case 'uzman_doktor':
+      f(cx + 12, 34, 12, 18, C.W)
+      for (let i = 0; i < 8; i++) s(cx + 14, 38 + i, C.B)
+      s(cx + 16, 42, C.R)
+      s(cx - 18, 34, C.R)
+      s(cx - 16, 36, C.R)
+      s(cx - 14, 38, C.R)
+      s(cx - 12, 40, C.S)
+      s(cx - 10, 42, C.R)
+      break
+  }
+}
+
+function buildSprite(draw, id) {
+  const up = upscale2x(draw())
+  enhance(id, up)
+  return up
+}
+
 function hexToRgba(hex) {
   const n = parseInt(hex.slice(1), 16)
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255, 255]
@@ -403,13 +526,17 @@ function writePng(matrix, filePath) {
 fs.mkdirSync(OUT_DIR, { recursive: true })
 
 for (const [id, draw] of Object.entries(SPRITES)) {
-  writePng(draw(), path.join(OUT_DIR, `${id}.png`))
-  console.log(`✓ ${id}.png`)
+  writePng(buildSprite(draw, id), path.join(OUT_DIR, `${id}.png`))
+  console.log(`✓ ${id}.png (64×96 → ${64 * SCALE}×${96 * SCALE})`)
 }
 
 const jsonOut = path.join(__dirname, '../src/data/characterPixels.json')
 fs.writeFileSync(
   jsonOut,
-  JSON.stringify(Object.fromEntries(Object.entries(SPRITES).map(([id, d]) => [id, d()]))),
+  JSON.stringify(
+    Object.fromEntries(
+      Object.entries(SPRITES).map(([id, d]) => [id, buildSprite(d, id)]),
+    ),
+  ),
 )
 console.log(`✓ characterPixels.json`)

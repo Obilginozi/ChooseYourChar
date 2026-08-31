@@ -3,8 +3,8 @@ import characterPixels from '../data/characterPixels.json'
 
 type PixelMatrix = (string | null)[][]
 
-const SPRITE_WIDTH = 32
-const SPRITE_HEIGHT = 48
+const SPRITE_WIDTH = 64
+const SPRITE_HEIGHT = 96
 
 const PLACEHOLDER_MATRICES: Record<string, PixelMatrix> =
   characterPixels as Record<string, PixelMatrix>
@@ -98,7 +98,7 @@ export function PixelPortrait({
         height={height}
         className={`pixelated ${className}`}
         style={{
-          border: `3px solid ${accentColor}`,
+          border: `4px solid ${accentColor}`,
           objectFit: 'contain',
         }}
         onError={() => setImgFailed(true)}

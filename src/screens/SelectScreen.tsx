@@ -1,10 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { CharacterCard } from '../components/CharacterCard'
-import { CharacterCarousel } from '../components/CharacterCarousel'
+import { CharacterShowcase } from '../components/CharacterShowcase'
 import { ConfettiBurst } from '../components/ConfettiBurst'
 import { PixelButton } from '../components/PixelButton'
 import { characters } from '../data/characters'
-import { useIsMobile } from '../hooks/useIsMobile'
 import { useKeyboardNav } from '../hooks/useKeyboardNav'
 import { useSound } from '../hooks/useSound'
 import { useSwipe } from '../hooks/useSwipe'
@@ -21,10 +19,8 @@ export function SelectScreen({ onBack, onConfirm }: SelectScreenProps) {
   const [showConfetti, setShowConfetti] = useState(false)
   const [confettiOrigin, setConfettiOrigin] = useState({ x: 0.5, y: 0.5 })
   const [confettiColors, setConfettiColors] = useState<string[]>(['#FFD700'])
-  const cardRefs = useRef<(HTMLButtonElement | null)[]>([])
+  const portraitRef = useRef<HTMLDivElement>(null)
   const isFirstRender = useRef(true)
-  const isMobile = useIsMobile()
-  const columns = isMobile ? 1 : 5
   const { playSfx } = useSound()
 
   const selectedCharacter = characters[selectedIndex]
@@ -42,8 +38,8 @@ export function SelectScreen({ onBack, onConfirm }: SelectScreenProps) {
   }, [])
 
   const swipeHandlers = useSwipe({
-    onSwipeLeft: isMobile ? goToNext : undefined,
-    onSwipeRight: isMobile ? goToPrev : undefined,
+    onSwipeLeft: goToNext,
+    onSwipeRight: goToPrev,
   })
 
   useEffect(() => {
@@ -60,9 +56,9 @@ export function SelectScreen({ onBack, onConfirm }: SelectScreenProps) {
       const character = characters[index]
       if (!character) return
 
-      const card = cardRefs.current[index]
-      if (card) {
-        const rect = card.getBoundingClientRect()
+      const el = portraitRef.current
+      if (el) {
+        const rect = el.getBoundingClientRect()
         setConfettiOrigin({
           x: (rect.left + rect.width / 2) / window.innerWidth,
           y: (rect.top + rect.height / 2) / window.innerHeight,
@@ -80,32 +76,21 @@ export function SelectScreen({ onBack, onConfirm }: SelectScreenProps) {
       setIsConfirming(true)
       setIsShaking(true)
 
-      setTimeout(() => {
-        onConfirm(character.id)
-      }, 450)
-
-      setTimeout(() => {
-        setIsShaking(false)
-      }, 250)
+      setTimeout(() => onConfirm(character.id), 450)
+      setTimeout(() => setIsShaking(false), 250)
     },
     [isConfirming, onConfirm],
   )
 
   useKeyboardNav({
     itemCount: characters.length,
-    columns,
+    columns: 1,
     selectedIndex,
     onSelect: handleSelect,
     onConfirm: handleConfirm,
     onEscape: onBack,
     enabled: !isConfirming,
   })
-
-  useEffect(() => {
-    if (isMobile) return
-    const card = cardRefs.current[selectedIndex]
-    card?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
-  }, [selectedIndex, isMobile])
 
   return (
     <div
@@ -123,7 +108,7 @@ export function SelectScreen({ onBack, onConfirm }: SelectScreenProps) {
         aria-hidden="true"
       />
 
-      <header className="relative z-10 mb-4 text-center">
+      <header className="relative z-10 mb-2 text-center">
         <h1
           className="font-header text-xs sm:text-sm"
           style={{ color: '#FFD700' }}
@@ -132,39 +117,20 @@ export function SelectScreen({ onBack, onConfirm }: SelectScreenProps) {
         </h1>
       </header>
 
-      <div className="relative z-10 flex flex-1 flex-col items-center gap-4 overflow-y-auto">
-        {isMobile ? (
-          <CharacterCarousel
-            characters={characters}
-            selectedIndex={selectedIndex}
-            isConfirming={isConfirming}
-            onSelect={handleSelect}
-            cardRefs={cardRefs}
-          />
-        ) : (
-          <div
-            className="grid w-full max-w-3xl grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5"
-            role="listbox"
-            aria-label="Character selection"
-          >
-            {characters.map((character, index) => (
-              <CharacterCard
-                key={character.id}
-                ref={(el) => {
-                  cardRefs.current[index] = el
-                }}
-                character={character}
-                isSelected={selectedIndex === index}
-                isConfirming={isConfirming && selectedIndex === index}
-                onSelect={() => handleSelect(index)}
-              />
-            ))}
-          </div>
-        )}
+      <div className="relative z-10 flex flex-1 flex-col items-center justify-center gap-4">
+        <CharacterShowcase
+          characters={characters}
+          selectedIndex={selectedIndex}
+          isConfirming={isConfirming}
+          onPrev={goToPrev}
+          onNext={goToNext}
+          onSelect={handleSelect}
+          portraitRef={portraitRef}
+        />
 
         {selectedCharacter && (
           <div
-            className="w-full max-w-3xl px-2 py-3 text-center"
+            className="w-full max-w-2xl px-3 py-3 text-center"
             style={{
               borderTop: `2px solid ${selectedCharacter.accentColor}`,
               borderBottom: `2px solid ${selectedCharacter.accentColor}`,
@@ -172,19 +138,19 @@ export function SelectScreen({ onBack, onConfirm }: SelectScreenProps) {
             }}
           >
             <p
-              className="font-header mb-2 text-[10px] sm:text-xs"
+              className="font-header mb-2 text-[10px] sm:text-sm"
               style={{ color: selectedCharacter.accentColor }}
             >
               {selectedCharacter.name}
             </p>
-            <p className="font-body text-lg leading-snug text-[#F5E6C8] sm:text-xl">
+            <p className="font-body text-xl leading-snug text-[#F5E6C8] sm:text-2xl">
               {selectedCharacter.tagline}
             </p>
           </div>
         )}
       </div>
 
-      <footer className="relative z-10 mt-4 flex flex-wrap items-center justify-center gap-3">
+      <footer className="relative z-10 mt-3 flex flex-wrap items-center justify-center gap-3">
         <PixelButton
           onClick={() => handleConfirm(selectedIndex)}
           disabled={isConfirming}
@@ -198,7 +164,7 @@ export function SelectScreen({ onBack, onConfirm }: SelectScreenProps) {
       </footer>
 
       <p className="relative z-10 mt-2 hidden text-center font-body text-base text-[#a89b7a] sm:block">
-        ← → ↑ ↓ navigate · Enter confirm · Esc back
+        ← → change character · Enter confirm · Esc back
       </p>
 
       <ConfettiBurst
