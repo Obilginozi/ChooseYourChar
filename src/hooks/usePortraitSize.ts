@@ -8,8 +8,8 @@ export function usePortraitSize(): number {
     const update = () => {
       const h = window.innerHeight
       const w = window.innerWidth
-      const computed = Math.min(Math.floor(h * 0.44), Math.floor(w * 0.62), 460)
-      setSize(Math.max(computed, 240))
+      const computed = Math.min(Math.floor(h * 0.55), Math.floor(w * 0.78), 680)
+      setSize(Math.max(computed, 340))
     }
     update()
     window.addEventListener('resize', update)
