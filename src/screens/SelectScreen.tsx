@@ -30,6 +30,7 @@ export function SelectScreen({ onBack, onConfirm, onVs }: SelectScreenProps) {
   const [showConfetti, setShowConfetti] = useState(false)
   const [confettiOrigin, setConfettiOrigin] = useState({ x: 0.5, y: 0.5 })
   const [confettiColors, setConfettiColors] = useState<string[]>(['#FFD700'])
+  const [isCarouselSliding, setIsCarouselSliding] = useState(false)
   const portraitRef = useRef<HTMLDivElement>(null)
   const isFirstRender = useRef(true)
   const { playSfx, playCharacterConfirm } = useSound()
@@ -65,8 +66,8 @@ export function SelectScreen({ onBack, onConfirm, onVs }: SelectScreenProps) {
   }, [isConfirming, selectedIndex, handleSelect])
 
   const swipeHandlers = useSwipe({
-    onSwipeLeft: goToNext,
-    onSwipeRight: goToPrev,
+    onSwipeLeft: isCarouselSliding || isConfirming ? undefined : goToNext,
+    onSwipeRight: isCarouselSliding || isConfirming ? undefined : goToPrev,
   })
 
   useEffect(() => {
@@ -160,6 +161,7 @@ export function SelectScreen({ onBack, onConfirm, onVs }: SelectScreenProps) {
           selectedIndex={selectedIndex}
           isConfirming={isConfirming}
           onSelect={handleSelect}
+          onSlidingChange={setIsCarouselSliding}
           portraitRef={portraitRef}
         />
 

@@ -10,7 +10,7 @@ import { PixelButton } from './PixelButton'
 import { PixelPortrait } from './PixelPortrait'
 import { ScreenFrame } from './ScreenFrame'
 import { useSound } from '../hooks/useSound'
-import { useIsMobile } from '../hooks/useIsMobile'
+import { useTouchDevice } from '../hooks/useTouchDevice'
 import type { Character } from '../types/character'
 
 interface VsBattleGameProps {
@@ -198,7 +198,7 @@ function BattleIntroOverlay({
 
 export function VsBattleGame({ player, cpu, onExit }: VsBattleGameProps) {
   const { playBattleSfx } = useSound()
-  const isMobile = useIsMobile()
+  const isTouch = useTouchDevice()
   const inputRef = useRef<PlayerInput>({ left: false, right: false, attack: false })
   const battleRef = useRef<BattleState>(createBattleState(player.stats, cpu.stats))
   const [renderState, setRenderState] = useState<BattleState>(() => battleRef.current)
@@ -402,24 +402,27 @@ export function VsBattleGame({ player, cpu, onExit }: VsBattleGameProps) {
 
   const scoreLabel = `${match.playerWins} - ${match.cpuWins}`
 
-  const spriteSize = isMobile ? 52 : 72
+  const spriteSize = isTouch ? 56 : 72
   const playerFighter = renderState.player
   const cpuFighter = renderState.cpu
 
   return (
     <ScreenFrame lockHeight className="gap-1.5">
       <div className="relative z-20 flex shrink-0 flex-col gap-1.5">
-        <div className="flex items-center justify-between gap-2 sm:hidden">
-          <PixelButton onClick={onExit} variant="secondary" className="!min-h-[36px] !px-3 !py-2 !text-[8px]">
-            BACK
-          </PixelButton>
-          <span className="font-header text-[7px] text-[#E74C3C]">
-            R{match.round} · {scoreLabel}
-          </span>
-          <span className="w-[4.5rem]" aria-hidden="true" />
-        </div>
+        {isTouch && (
+          <div className="flex items-center justify-between gap-2">
+            <PixelButton onClick={onExit} variant="secondary" className="!min-h-[36px] !px-3 !py-2 !text-[8px]">
+              BACK
+            </PixelButton>
+            <span className="font-header text-[7px] text-[#E74C3C]">
+              R{match.round} · {scoreLabel}
+            </span>
+            <span className="w-[4.5rem]" aria-hidden="true" />
+          </div>
+        )}
 
-        <header className="w-full pr-[4.5rem] sm:hidden">
+        {isTouch && (
+          <header className="w-full pr-[4.5rem]">
           <div className="grid grid-cols-2 gap-1.5">
             <HpBar
               label={player.name}
@@ -437,6 +440,7 @@ export function VsBattleGame({ player, cpu, onExit }: VsBattleGameProps) {
             />
           </div>
         </header>
+        )}
       </div>
 
       <div
@@ -550,31 +554,36 @@ export function VsBattleGame({ player, cpu, onExit }: VsBattleGameProps) {
         )}
       </div>
 
-      <div className="relative z-10 mx-auto mt-2 hidden w-full max-w-2xl shrink-0 items-center gap-4 sm:flex">
-        <HpBar
-          label={player.name}
-          hp={playerFighter.hp}
-          maxHp={playerFighter.maxHp}
-          accentColor={player.accentColor}
-          align="left"
-        />
-        <span className="font-header shrink-0 text-[10px] text-[#E74C3C]">
-          R{match.round} · {scoreLabel}
-        </span>
-        <HpBar
-          label={cpu.name}
-          hp={cpuFighter.hp}
-          maxHp={cpuFighter.maxHp}
-          accentColor={cpu.accentColor}
-          align="right"
-        />
-      </div>
+      {!isTouch && (
+        <div className="relative z-10 mx-auto mt-2 flex w-full max-w-2xl shrink-0 items-center gap-4">
+          <HpBar
+            label={player.name}
+            hp={playerFighter.hp}
+            maxHp={playerFighter.maxHp}
+            accentColor={player.accentColor}
+            align="left"
+          />
+          <span className="font-header shrink-0 text-[10px] text-[#E74C3C]">
+            R{match.round} · {scoreLabel}
+          </span>
+          <HpBar
+            label={cpu.name}
+            hp={cpuFighter.hp}
+            maxHp={cpuFighter.maxHp}
+            accentColor={cpu.accentColor}
+            align="right"
+          />
+        </div>
+      )}
 
-      <p className="relative z-10 mt-1 hidden shrink-0 text-center font-body text-sm text-[#a89b7a] sm:block">
-        ← → hareket · Space / J saldırı · Esc çık
-      </p>
+      {!isTouch && (
+        <p className="relative z-10 mt-1 shrink-0 text-center font-body text-sm text-[#a89b7a]">
+          ← → hareket · Space / J saldırı · Esc çık
+        </p>
+      )}
 
-      <div className="relative z-10 mt-2 flex shrink-0 items-center justify-between gap-2 sm:hidden">
+      {isTouch && (
+        <div className="relative z-10 mt-2 flex shrink-0 items-center justify-between gap-2">
         <div className="flex gap-1.5">
           <TouchControl
             label="◀"
@@ -599,13 +608,16 @@ export function VsBattleGame({ player, cpu, onExit }: VsBattleGameProps) {
           disabled={!fightingActive}
           onPress={(pressed) => syncInput({ attack: pressed })}
         />
-      </div>
+        </div>
+      )}
 
-      <footer className="relative z-10 mt-2 hidden shrink-0 justify-center sm:flex">
-        <PixelButton onClick={onExit} variant="secondary">
-          BACK
-        </PixelButton>
-      </footer>
+      {!isTouch && (
+        <footer className="relative z-10 mt-2 flex shrink-0 justify-center">
+          <PixelButton onClick={onExit} variant="secondary">
+            BACK
+          </PixelButton>
+        </footer>
+      )}
     </ScreenFrame>
   )
 }

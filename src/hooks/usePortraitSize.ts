@@ -21,8 +21,14 @@ export function usePortraitSize(context: PortraitContext = 'select'): number {
         return
       }
 
-      const computed = Math.min(Math.floor(h * 0.55), Math.floor(w * 0.78), 680)
-      setSize(Math.max(computed, 340))
+      const isCoarse =
+        window.matchMedia('(pointer: coarse)').matches ||
+        window.matchMedia('(hover: none)').matches
+
+      const computed = isCoarse
+        ? Math.min(Math.floor(h * 0.48), Math.floor(w * 0.62), 520)
+        : Math.min(Math.floor(h * 0.55), Math.floor(w * 0.78), 680)
+      setSize(Math.max(computed, isCoarse ? 280 : 340))
     }
     update()
     window.addEventListener('resize', update)

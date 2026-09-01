@@ -4,7 +4,7 @@ import { PixelButton } from '../components/PixelButton'
 import { PixelPortrait } from '../components/PixelPortrait'
 import { ScreenFrame } from '../components/ScreenFrame'
 import { getCharacterById } from '../data/characters'
-import { useIsMobile } from '../hooks/useIsMobile'
+import { useTouchDevice } from '../hooks/useTouchDevice'
 import { useJokeCarousel } from '../hooks/useJokeCarousel'
 import { usePortraitSize } from '../hooks/usePortraitSize'
 import { useSwipe } from '../hooks/useSwipe'
@@ -19,17 +19,17 @@ export function DetailScreen({ characterId, onBack }: DetailScreenProps) {
   const jokeCount = character?.jokes.length ?? 0
   const { currentIndex, goNext, goPrev } = useJokeCarousel({ jokeCount })
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null)
-  const isMobile = useIsMobile()
+  const isTouch = useTouchDevice()
   const portraitSize = usePortraitSize('detail')
   const canNavigate = jokeCount > 1
 
   const swipeHandlers = useSwipe(
     useMemo(
       () => ({
-        onSwipeLeft: isMobile && canNavigate ? goNext : undefined,
-        onSwipeRight: isMobile && canNavigate ? goPrev : undefined,
+        onSwipeLeft: isTouch && canNavigate ? goNext : undefined,
+        onSwipeRight: isTouch && canNavigate ? goPrev : undefined,
       }),
-      [isMobile, canNavigate, goNext, goPrev],
+      [isTouch, canNavigate, goNext, goPrev],
     ),
   )
 

@@ -15,6 +15,7 @@ import {
   setAudioMuted,
   startBgm,
   stopBgm,
+  unlockAudioSync,
   type BattleSfxName,
 } from '../audio/audioEngine'
 
@@ -49,21 +50,36 @@ export function SoundProvider({ children }: { children: ReactNode }) {
         stopBgm()
         return
       }
-      resumeAudio().then(() => startBgm())
+      unlockAudioSync()
+      void resumeAudio().then(() => startBgm())
     }
 
     tryStartAudio()
 
     const unlock = () => tryStartAudio()
-    window.addEventListener('pointerdown', unlock)
+    const unlockOptions: AddEventListenerOptions = { capture: true, passive: true }
+    window.addEventListener('pointerdown', unlock, unlockOptions)
+    window.addEventListener('touchstart', unlock, unlockOptions)
+    window.addEventListener('touchend', unlock, unlockOptions)
+    window.addEventListener('click', unlock, unlockOptions)
     window.addEventListener('keydown', unlock)
-    window.addEventListener('touchstart', unlock, { passive: true })
+
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible' && !muted) {
+        unlockAudioSync()
+        void resumeAudio().then(() => startBgm())
+      }
+    }
+    document.addEventListener('visibilitychange', onVisibility)
 
     return () => {
       stopBgm()
-      window.removeEventListener('pointerdown', unlock)
+      window.removeEventListener('pointerdown', unlock, unlockOptions)
+      window.removeEventListener('touchstart', unlock, unlockOptions)
+      window.removeEventListener('touchend', unlock, unlockOptions)
+      window.removeEventListener('click', unlock, unlockOptions)
       window.removeEventListener('keydown', unlock)
-      window.removeEventListener('touchstart', unlock)
+      document.removeEventListener('visibilitychange', onVisibility)
     }
   }, [muted])
 
@@ -76,6 +92,10 @@ export function SoundProvider({ children }: { children: ReactNode }) {
         // ignore
       }
       setAudioMuted(next)
+      if (!next) {
+        unlockAudioSync()
+        void resumeAudio().then(() => startBgm())
+      }
       return next
     })
   }, [])
@@ -83,7 +103,8 @@ export function SoundProvider({ children }: { children: ReactNode }) {
   const playSfx = useCallback(
     (name: SfxName) => {
       if (muted) return
-      resumeAudio().then(() => enginePlaySfx(name))
+      unlockAudioSync()
+      void resumeAudio().then(() => enginePlaySfx(name))
     },
     [muted],
   )
@@ -91,7 +112,8 @@ export function SoundProvider({ children }: { children: ReactNode }) {
   const playBattleSfx = useCallback(
     (name: BattleSfxName) => {
       if (muted) return
-      resumeAudio().then(() => enginePlayBattleSfx(name))
+      unlockAudioSync()
+      void resumeAudio().then(() => enginePlayBattleSfx(name))
     },
     [muted],
   )
@@ -99,7 +121,8 @@ export function SoundProvider({ children }: { children: ReactNode }) {
   const playCharacterConfirm = useCallback(
     (characterId: string) => {
       if (muted) return
-      resumeAudio().then(() => enginePlayCharacterConfirm(characterId))
+      unlockAudioSync()
+      void resumeAudio().then(() => enginePlayCharacterConfirm(characterId))
     },
     [muted],
   )

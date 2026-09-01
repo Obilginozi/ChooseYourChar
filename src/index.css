@@ -407,6 +407,12 @@ body,
   position: relative;
   overflow: hidden;
   perspective: 900px;
+  touch-action: pan-y;
+  contain: layout style paint;
+}
+
+.character-carousel-touch .character-carousel-viewport {
+  perspective: none;
 }
 
 .character-carousel-slide {
@@ -417,6 +423,11 @@ body,
   justify-content: center;
   transform-style: preserve-3d;
   will-change: transform, opacity;
+}
+
+.character-carousel-touch .character-carousel-slide {
+  transform-style: flat;
+  backface-visibility: hidden;
 }
 
 .character-carousel-current {
@@ -497,6 +508,81 @@ body,
 .character-carousel-enter-prev {
   animation: carousel-enter-prev 400ms cubic-bezier(0.45, 0.05, 0.55, 0.95) forwards;
   z-index: 2;
+}
+
+.character-carousel-touch .character-carousel-exit-next {
+  animation: carousel-exit-next-touch 260ms cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+}
+
+.character-carousel-touch .character-carousel-enter-next {
+  animation: carousel-enter-next-touch 260ms cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+}
+
+.character-carousel-touch .character-carousel-exit-prev {
+  animation: carousel-exit-prev-touch 260ms cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+}
+
+.character-carousel-touch .character-carousel-enter-prev {
+  animation: carousel-enter-prev-touch 260ms cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+}
+
+.character-carousel-touch .character-carousel-current {
+  animation: carousel-settle-touch 220ms ease-out;
+}
+
+@keyframes carousel-exit-next-touch {
+  from {
+    transform: translate3d(0, 0, 0);
+    opacity: 1;
+  }
+  to {
+    transform: translate3d(-100%, 0, 0);
+    opacity: 0;
+  }
+}
+
+@keyframes carousel-enter-next-touch {
+  from {
+    transform: translate3d(100%, 0, 0);
+    opacity: 0;
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+    opacity: 1;
+  }
+}
+
+@keyframes carousel-exit-prev-touch {
+  from {
+    transform: translate3d(0, 0, 0);
+    opacity: 1;
+  }
+  to {
+    transform: translate3d(100%, 0, 0);
+    opacity: 0;
+  }
+}
+
+@keyframes carousel-enter-prev-touch {
+  from {
+    transform: translate3d(-100%, 0, 0);
+    opacity: 0;
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+    opacity: 1;
+  }
+}
+
+@keyframes carousel-settle-touch {
+  0% {
+    transform: translate3d(0, 4px, 0) scale(0.98);
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 1;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

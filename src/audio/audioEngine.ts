@@ -8,6 +8,67 @@ let bgmStep = 0
 let bgmTimer: ReturnType<typeof setInterval> | null = null
 let isMuted = false
 let bgmRunning = false
+let audioUnlocked = false
+
+type AudioContextCtor = typeof AudioContext
+
+function getAudioContextClass(): AudioContextCtor | null {
+  const w = window as Window & { webkitAudioContext?: AudioContextCtor }
+  return window.AudioContext ?? w.webkitAudioContext ?? null
+}
+
+function getContext(): AudioContext {
+  if (!audioContext) {
+    const Ctor = getAudioContextClass()
+    if (!Ctor) {
+      throw new Error('Web Audio API is not supported')
+    }
+    audioContext = new Ctor()
+  }
+  return audioContext
+}
+
+/** Call synchronously inside a user gesture (tap/click) — required for iOS/iPadOS Safari. */
+export function unlockAudioSync(): void {
+  if (isMuted) return
+
+  const ctx = getContext()
+  if (ctx.state === 'running') {
+    audioUnlocked = true
+    return
+  }
+
+  try {
+    const buffer = ctx.createBuffer(1, 1, 22050)
+    const source = ctx.createBufferSource()
+    source.buffer = buffer
+    source.connect(ctx.destination)
+    source.start(0)
+    void ctx.resume()
+    audioUnlocked = true
+  } catch {
+    // ignore — will retry on next gesture
+  }
+}
+
+export async function resumeAudio(): Promise<void> {
+  if (isMuted) return
+
+  unlockAudioSync()
+  const ctx = getContext()
+  if (ctx.state === 'suspended') {
+    await ctx.resume()
+  }
+  audioUnlocked = ctx.state === 'running'
+}
+
+function ensureContextRunning(): boolean {
+  if (isMuted) return false
+  const ctx = getContext()
+  if (ctx.state !== 'suspended') return true
+  if (!audioUnlocked) unlockAudioSync()
+  return ctx.state !== 'suspended'
+}
 
 const BGM_PATTERN = [
   [262, 330, 392, 523],
@@ -15,13 +76,6 @@ const BGM_PATTERN = [
   [330, 392, 494, 659],
   [262, 330, 392, 523],
 ]
-
-function getContext(): AudioContext {
-  if (!audioContext) {
-    audioContext = new AudioContext()
-  }
-  return audioContext
-}
 
 export function setAudioMuted(muted: boolean) {
   isMuted = muted
@@ -38,7 +92,7 @@ function playTone(
   volume = 0.08,
   type: OscillatorType = 'square',
 ) {
-  if (isMuted) return
+  if (isMuted || !ensureContextRunning()) return
 
   const ctx = getContext()
   const osc = ctx.createOscillator()
@@ -266,9 +320,14 @@ export function startBgm() {
     return
   }
 
+  unlockAudioSync()
   const ctx = getContext()
   if (ctx.state === 'suspended') {
-    ctx.resume()
+    bgmRunning = true
+    void ctx.resume().then(() => {
+      if (!isMuted && bgmRunning) startBgm()
+    })
+    return
   }
 
   if (bgmTimer) return
@@ -298,12 +357,5 @@ export function stopBgm() {
   if (bgmGain) {
     bgmGain.disconnect()
     bgmGain = null
-  }
-}
-
-export async function resumeAudio() {
-  const ctx = getContext()
-  if (ctx.state === 'suspended') {
-    await ctx.resume()
   }
 }
