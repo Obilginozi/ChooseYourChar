@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-const AUTO_ADVANCE_MS = 4000
+const AUTO_ADVANCE_MS = 7000
 const MANUAL_PAUSE_MS = 15000
 
 interface UseJokeCarouselOptions {

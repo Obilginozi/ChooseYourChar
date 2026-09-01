@@ -149,7 +149,7 @@ export function DetailScreen({ characterId, onBack }: DetailScreenProps) {
             Swipe left/right for jokes
           </p>
           <p className="mr-auto hidden w-full max-w-[min(100%,36rem)] font-body text-base text-[#a89b7a] sm:block">
-            ← → prev/next joke · Esc back · auto-advances every 4s
+            ← → prev/next joke · Esc back · auto-advances every 7s
           </p>
         </div>
       </div>
