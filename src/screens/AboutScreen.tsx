@@ -51,8 +51,7 @@ export function AboutScreen({ onBack }: AboutScreenProps) {
         <section className="dialogue-box px-4 py-4">
           <h2 className="font-header mb-2 text-[9px] text-[#FFD700]">MADE BY</h2>
           <p className="font-body text-xl text-[#F5E6C8]">
-            Oguzhan Bilgin — edit this in{' '}
-            <code className="text-[#1ABC9C]">AboutScreen.tsx</code>
+            Oguzhan Alfred Bilgin 
           </p>
         </section>
 
@@ -62,8 +61,7 @@ export function AboutScreen({ onBack }: AboutScreenProps) {
           </h2>
           <p className="font-body mb-3 text-lg leading-relaxed text-[#a89b7a]">
             Counts are stored only in <strong className="text-[#F5E6C8]">your browser</strong>{' '}
-            — nothing is sent to a server. View them here or in DevTools console:{' '}
-            <code className="text-[#1ABC9C]">__cycAnalytics()</code>
+            — nothing is sent to a server. View them here or in DevTools console.
           </p>
           <p className="font-body mb-2 text-lg text-[#F5E6C8]">
             Total confirms: <span className="text-[#FFD700]">{totalPicks}</span>

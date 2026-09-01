@@ -83,8 +83,8 @@ export function DetailScreen({ characterId, onBack }: DetailScreenProps) {
       onTouchStart={swipeHandlers.onTouchStart}
       onTouchEnd={swipeHandlers.onTouchEnd}
     >
-      <div className="relative z-10 flex flex-1 flex-col gap-6 lg:flex-row lg:items-center lg:gap-10">
-        <div className="flex shrink-0 flex-col items-center gap-4 lg:w-2/5">
+      <div className="relative z-10 mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-3 sm:px-5 lg:flex-row lg:items-center lg:gap-10 lg:px-8">
+        <div className="flex shrink-0 flex-col items-center gap-4 lg:w-[38%]">
           <PixelPortrait
             key={character.id}
             spriteSrc={character.spriteSrc}
@@ -105,16 +105,18 @@ export function DetailScreen({ characterId, onBack }: DetailScreenProps) {
           </p>
         </div>
 
-        <div className="flex flex-1 flex-col gap-4">
-          <DialogueBox
-            text={currentJoke}
-            characterName={character.name}
-            accentColor={character.accentColor}
-            jokeIndex={currentIndex}
-            jokeTotal={jokeCount}
-          />
+        <div className="flex w-full flex-col gap-4 lg:max-w-2xl lg:flex-1 lg:self-center">
+          <div className="mr-auto w-full max-w-[min(100%,36rem)]">
+            <DialogueBox
+              text={currentJoke}
+              characterName={character.name}
+              accentColor={character.accentColor}
+              jokeIndex={currentIndex}
+              jokeTotal={jokeCount}
+            />
+          </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-3">
+          <div className="mr-auto flex w-full max-w-[min(100%,36rem)] flex-wrap items-center justify-center gap-3 sm:justify-start">
             <PixelButton
               onClick={goPrev}
               disabled={!canNavigate}
@@ -138,19 +140,16 @@ export function DetailScreen({ characterId, onBack }: DetailScreenProps) {
             >
               {copyFeedback ?? 'COPY'}
             </PixelButton>
-          </div>
-
-          <div className="flex justify-center">
             <PixelButton onClick={onBack} variant="secondary">
               ← BACK TO SELECT
             </PixelButton>
           </div>
 
-          <p className="text-center font-body text-base text-[#a89b7a] sm:hidden">
+          <p className="mr-auto w-full max-w-[min(100%,36rem)] text-center font-body text-base text-[#a89b7a] sm:text-left lg:hidden">
             Swipe left/right for jokes
           </p>
-          <p className="hidden text-center font-body text-base text-[#a89b7a] sm:block">
-            ← → prev/next joke · Esc back · auto-advances every 8s
+          <p className="mr-auto hidden w-full max-w-[min(100%,36rem)] font-body text-base text-[#a89b7a] sm:block">
+            ← → prev/next joke · Esc back · auto-advances every 4s
           </p>
         </div>
       </div>

@@ -114,9 +114,108 @@ function hashCharacterId(id: string): number {
   return Math.abs(h)
 }
 
+const FB_NOTE = {
+  D4: 293.66,
+  E4: 329.63,
+  F4: 349.23,
+  G4: 392.0,
+  A4: 440.0,
+  B4: 493.88,
+  C5: 523.25,
+  G2: 98.0,
+  G3: 196.0,
+  F3: 174.61,
+} as const
+
+/** Yaşa Fenerbahçe marşı — orijinal notalar, 8-bit arcade. */
+function playFenerbahceAnthemArcade() {
+  const TARGET_SEC = 7
+
+  type MelodyNote = { freq: number; beats: number }
+  const note = (freq: number, beats: number): MelodyNote => ({ freq, beats })
+
+  // _ = kısa · normal = orta · __ = uzun · ___ = çok uzun
+  const SHORT = 0.3
+  const NORMAL = 0.5
+  const MED = 0.75
+  const HOLD = 1.0
+  const LONG = 1.5
+
+  const melody: MelodyNote[] = [
+    // sol_ sol sol sol la sol fa | mi__ sol_
+    note(FB_NOTE.G4, SHORT),
+    note(FB_NOTE.G4, NORMAL),
+    note(FB_NOTE.G4, NORMAL),
+    note(FB_NOTE.G4, NORMAL),
+    note(FB_NOTE.A4, NORMAL),
+    note(FB_NOTE.G4, NORMAL),
+    note(FB_NOTE.F4, NORMAL),
+    note(FB_NOTE.E4, HOLD),
+    note(FB_NOTE.G4, MED),
+    // do_ la si_ sol_ | fa___
+    note(FB_NOTE.C5, SHORT),
+    note(FB_NOTE.A4, NORMAL),
+    note(FB_NOTE.B4, SHORT),
+    note(FB_NOTE.G4, SHORT),
+    note(FB_NOTE.F4, LONG),
+    // fa_ fa fa fa sol fa mi | re__ sol_
+    note(FB_NOTE.F4, SHORT),
+    note(FB_NOTE.F4, NORMAL),
+    note(FB_NOTE.F4, NORMAL),
+    note(FB_NOTE.F4, NORMAL),
+    note(FB_NOTE.G4, NORMAL),
+    note(FB_NOTE.F4, NORMAL),
+    note(FB_NOTE.E4, NORMAL),
+    note(FB_NOTE.D4, HOLD),
+    note(FB_NOTE.G4, MED),
+    // si_ sol la_ fa_ | mi__
+    note(FB_NOTE.B4, SHORT),
+    note(FB_NOTE.G4, NORMAL),
+    note(FB_NOTE.A4, SHORT),
+    note(FB_NOTE.F4, SHORT),
+    note(FB_NOTE.E4, HOLD),
+  ]
+
+  const totalBeats = melody.reduce((sum, { beats }) => sum + beats, 0)
+  const beatMs = (TARGET_SEC * 1000) / totalBeats
+
+  const bassRoots = [
+    ...Array(9).fill(FB_NOTE.G2),
+    FB_NOTE.G2,
+    FB_NOTE.G2,
+    FB_NOTE.G2,
+    FB_NOTE.G2,
+    FB_NOTE.G2,
+    ...Array(9).fill(FB_NOTE.F3),
+    ...Array(5).fill(FB_NOTE.G2),
+  ]
+
+  let offset = 0
+  melody.forEach(({ freq, beats }, i) => {
+    const stepMs = beatMs * beats
+    const dur = (stepMs * 0.88) / 1000
+    const delay = offset
+
+    setTimeout(() => {
+      playTone(freq, dur, 0.12, 'square')
+      playTone(bassRoots[i] ?? FB_NOTE.G2, dur * 1.02, 0.055, 'triangle')
+      if (beats >= 0.5 && Math.round(offset / beatMs) % 2 === 0) {
+        playTone(72, 0.07, 0.08, 'square')
+      }
+    }, delay)
+
+    offset += stepMs
+  })
+}
+
 /** Character-specific confirm jingle — pitch varies by fighter. */
 export function playCharacterConfirm(characterId: string) {
   if (isMuted) return
+
+  if (characterId === 'fenerbahceli') {
+    playFenerbahceAnthemArcade()
+    return
+  }
 
   const h = hashCharacterId(characterId)
   const base = 320 + (h % 180)

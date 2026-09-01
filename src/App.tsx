@@ -5,6 +5,7 @@ import { useCrtToggle } from './hooks/useCrtToggle'
 import { SoundProvider, useSound } from './hooks/useSound'
 import { useGameScreen } from './hooks/useGameScreen'
 import { recordCharacterPick, recordVsView } from './lib/analytics'
+import { easterEggOnCharacterPick } from './lib/consoleEasterEggs'
 import { AboutScreen } from './screens/AboutScreen'
 import { DetailScreen } from './screens/DetailScreen'
 import { SelectScreen } from './screens/SelectScreen'
@@ -35,6 +36,7 @@ function AppContent() {
 
   const handleConfirmCharacter = (characterId: string) => {
     recordCharacterPick(characterId)
+    easterEggOnCharacterPick(characterId)
     goToDetail(characterId)
   }
 
