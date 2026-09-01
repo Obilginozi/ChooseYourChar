@@ -1,3 +1,5 @@
+import { useTypewriter } from '../hooks/useTypewriter'
+
 interface DialogueBoxProps {
   text: string
   characterName: string
@@ -13,6 +15,8 @@ export function DialogueBox({
   jokeIndex,
   jokeTotal,
 }: DialogueBoxProps) {
+  const { displayed, done } = useTypewriter({ text, speedMs: 22 })
+
   return (
     <div className="dialogue-box w-full" style={{ borderColor: accentColor }}>
       <div
@@ -20,7 +24,7 @@ export function DialogueBox({
         style={{ borderBottomColor: accentColor }}
       >
         <span
-          className="font-header text-[8px] sm:text-[10px]"
+          className="font-body text-base sm:text-lg"
           style={{ color: accentColor }}
         >
           {characterName}
@@ -31,7 +35,12 @@ export function DialogueBox({
       </div>
       <div className="dialogue-box-body max-h-[40dvh] overflow-y-auto px-4 py-4 sm:max-h-none">
         <p className="font-body text-xl leading-relaxed text-[#F5E6C8] sm:text-2xl">
-          {text}
+          {displayed}
+          {!done && (
+            <span className="dialogue-cursor" aria-hidden="true">
+              ▌
+            </span>
+          )}
         </p>
       </div>
     </div>

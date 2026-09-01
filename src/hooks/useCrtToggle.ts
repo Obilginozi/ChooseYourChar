@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 
 const CRT_KEY = 'cyc-crt'
 
@@ -30,19 +30,9 @@ export function useCrtToggle() {
     })
   }, [])
 
-  const [isMobile, setIsMobile] = useState(false)
-
-  useEffect(() => {
-    const check = () =>
-      setIsMobile(window.matchMedia('(max-width: 768px)').matches)
-    check()
-    window.addEventListener('resize', check)
-    return () => window.removeEventListener('resize', check)
-  }, [])
-
   return {
-    crtEnabled: crtEnabled && !isMobile,
-    crtToggleVisible: !isMobile,
+    crtEnabled,
+    crtToggleVisible: true,
     toggleCrt,
   }
 }

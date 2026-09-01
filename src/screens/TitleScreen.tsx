@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { ScreenFrame } from '../components/ScreenFrame'
 
 interface Star {
   id: number
@@ -45,9 +46,10 @@ export function Starfield() {
 
 interface TitleScreenProps {
   onStart: () => void
+  onAbout: () => void
 }
 
-export function TitleScreen({ onStart }: TitleScreenProps) {
+export function TitleScreen({ onStart, onAbout }: TitleScreenProps) {
   const [isTouch, setIsTouch] = useState(false)
 
   useEffect(() => {
@@ -71,23 +73,8 @@ export function TitleScreen({ onStart }: TitleScreenProps) {
   }, [onStart])
 
   return (
-    <button
-      type="button"
-      onClick={onStart}
-      className="relative flex min-h-dvh w-full cursor-pointer flex-col items-center justify-center border-0 bg-transparent p-4 outline-none"
-      style={{
-        paddingTop: 'max(1rem, env(safe-area-inset-top))',
-        paddingBottom: 'max(1rem, env(safe-area-inset-bottom))',
-      }}
-      aria-label="Start game"
-    >
+    <ScreenFrame className="w-full items-center justify-center">
       <Starfield />
-
-      <div
-        className="absolute inset-4 pointer-events-none pixel-border"
-        style={{ borderColor: '#FFD700' }}
-        aria-hidden="true"
-      />
 
       <div
         className="absolute inset-0 pointer-events-none opacity-10"
@@ -98,7 +85,19 @@ export function TitleScreen({ onStart }: TitleScreenProps) {
         }}
       />
 
-      <div className="relative z-10 flex flex-col items-center gap-8 text-center">
+      <p
+        className="screen-header absolute left-0 right-0 top-[max(1.25rem,env(safe-area-inset-top))] z-10 text-center font-body text-lg text-[#a89b7a]"
+        aria-hidden="true"
+      >
+        INSERT COIN
+      </p>
+
+      <button
+        type="button"
+        onClick={onStart}
+        className="relative z-10 flex cursor-pointer flex-col items-center gap-8 border-0 bg-transparent text-center outline-none"
+        aria-label="Start game"
+      >
         <div className="flex flex-col gap-4">
           <h1
             className="font-header text-xl leading-relaxed sm:text-2xl md:text-3xl lg:text-4xl"
@@ -118,7 +117,7 @@ export function TitleScreen({ onStart }: TitleScreenProps) {
                 '3px 3px 0 #8B6914, 6px 6px 0 #000, 0 0 20px rgba(255,215,0,0.3)',
             }}
           >
-            CHARACTER
+            OUZAN
           </h1>
         </div>
 
@@ -126,9 +125,24 @@ export function TitleScreen({ onStart }: TitleScreenProps) {
           className="font-header animate-blink text-xs sm:text-sm"
           style={{ color: '#F5E6C8' }}
         >
-          {isTouch ? '▶ DOKUN BAŞLA ◀' : '▶ PRESS START ◀'}
+          {isTouch ? '▶ TAP TO CONTINUE ◀' : '▶ PRESS START TO CONTINUE ◀'}
         </p>
-      </div>
-    </button>
+      </button>
+
+      <button
+        type="button"
+        onClick={onAbout}
+        className="relative z-10 mt-8 font-header text-[8px] text-[#a89b7a] underline-offset-4 hover:text-[#FFD700] hover:underline"
+      >
+        CREDITS & STATS
+      </button>
+
+      <p
+        className="absolute bottom-[max(1rem,env(safe-area-inset-bottom))] left-0 right-0 z-10 text-center font-body text-sm text-[#555]"
+        aria-hidden="true"
+      >
+        © 2026 OUZANSOFT — FREE PLAY
+      </p>
+    </ScreenFrame>
   )
 }

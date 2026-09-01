@@ -1,23 +1,24 @@
 import { useState } from 'react'
 
-const SPRITE_WIDTH = 192
-const SPRITE_HEIGHT = 288
+const DEFAULT_SPRITE_WIDTH = 256
+const DEFAULT_SPRITE_HEIGHT = 256
 
 interface PixelPortraitProps {
   spriteSrc: string
   accentColor: string
   characterId: string
   size?: number
+  spriteWidth?: number
+  spriteHeight?: number
   className?: string
+  animate?: boolean
 }
 
 function PortraitPlaceholder({
-  accentColor,
   height,
   width,
   className,
 }: {
-  accentColor: string
   height: number
   width: number
   className?: string
@@ -25,11 +26,7 @@ function PortraitPlaceholder({
   return (
     <div
       className={`pixelated flex items-center justify-center bg-[#1a1a2e] ${className ?? ''}`}
-      style={{
-        width,
-        height,
-        border: `4px solid ${accentColor}`,
-      }}
+      style={{ width, height }}
       aria-hidden="true"
     >
       <span className="font-pixel text-2xl text-[#555]">?</span>
@@ -39,19 +36,20 @@ function PortraitPlaceholder({
 
 export function PixelPortrait({
   spriteSrc,
-  accentColor,
   size = 128,
+  spriteWidth = DEFAULT_SPRITE_WIDTH,
+  spriteHeight = DEFAULT_SPRITE_HEIGHT,
   className = '',
+  animate = true,
 }: PixelPortraitProps) {
   const [imgFailed, setImgFailed] = useState(false)
 
   const height = size
-  const width = Math.round(size * (SPRITE_WIDTH / SPRITE_HEIGHT))
+  const width = Math.round(size * (spriteWidth / spriteHeight))
 
   if (imgFailed) {
     return (
       <PortraitPlaceholder
-        accentColor={accentColor}
         width={width}
         height={height}
         className={className}
@@ -65,11 +63,8 @@ export function PixelPortrait({
       alt=""
       width={width}
       height={height}
-      className={`pixelated ${className}`}
-      style={{
-        border: `4px solid ${accentColor}`,
-        objectFit: 'contain',
-      }}
+      className={`pixelated ${animate ? 'character-enter' : ''} ${className}`}
+      style={{ objectFit: 'contain' }}
       onError={() => setImgFailed(true)}
     />
   )

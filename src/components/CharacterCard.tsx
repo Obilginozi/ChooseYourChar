@@ -45,6 +45,8 @@ export const CharacterCard = forwardRef<HTMLButtonElement, CharacterCardProps>(
           spriteSrc={character.spriteSrc}
           accentColor={character.accentColor}
           characterId={character.id}
+          spriteWidth={character.spriteWidth}
+          spriteHeight={character.spriteHeight}
           size={portraitSize}
           className="pointer-events-none"
         />

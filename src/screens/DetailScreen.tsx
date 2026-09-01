@@ -2,9 +2,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { DialogueBox } from '../components/DialogueBox'
 import { PixelButton } from '../components/PixelButton'
 import { PixelPortrait } from '../components/PixelPortrait'
+import { ScreenFrame } from '../components/ScreenFrame'
 import { getCharacterById } from '../data/characters'
 import { useIsMobile } from '../hooks/useIsMobile'
 import { useJokeCarousel } from '../hooks/useJokeCarousel'
+import { usePortraitSize } from '../hooks/usePortraitSize'
 import { useSwipe } from '../hooks/useSwipe'
 
 interface DetailScreenProps {
@@ -18,6 +20,7 @@ export function DetailScreen({ characterId, onBack }: DetailScreenProps) {
   const { currentIndex, goNext, goPrev } = useJokeCarousel({ jokeCount })
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null)
   const isMobile = useIsMobile()
+  const portraitSize = usePortraitSize('detail')
   const canNavigate = jokeCount > 1
 
   const swipeHandlers = useSwipe(
@@ -69,42 +72,35 @@ export function DetailScreen({ characterId, onBack }: DetailScreenProps) {
     return (
       <div className="flex min-h-dvh flex-col items-center justify-center gap-4 p-4">
         <p className="font-body text-2xl text-[#a89b7a]">Character not found.</p>
-        <PixelButton onClick={onBack}>GERİ</PixelButton>
+        <PixelButton onClick={onBack}>BACK</PixelButton>
       </div>
     )
   }
 
   return (
-    <div
-      className="relative flex min-h-dvh flex-col p-4"
-      style={{
-        paddingTop: 'max(1rem, env(safe-area-inset-top))',
-        paddingBottom: 'max(1rem, env(safe-area-inset-bottom))',
-      }}
+    <ScreenFrame
+      borderColor={character.accentColor}
       onTouchStart={swipeHandlers.onTouchStart}
       onTouchEnd={swipeHandlers.onTouchEnd}
     >
-      <div
-        className="pointer-events-none absolute inset-4 pixel-border"
-        style={{ borderColor: character.accentColor }}
-        aria-hidden="true"
-      />
-
-      <div className="relative z-10 flex flex-1 flex-col gap-6 lg:flex-row lg:items-center lg:gap-8">
-        <div className="flex shrink-0 flex-col items-center gap-3 lg:w-1/3">
+      <div className="relative z-10 flex flex-1 flex-col gap-6 lg:flex-row lg:items-center lg:gap-10">
+        <div className="flex shrink-0 flex-col items-center gap-4 lg:w-2/5">
           <PixelPortrait
+            key={character.id}
             spriteSrc={character.spriteSrc}
             accentColor={character.accentColor}
             characterId={character.id}
-            size={192}
+            spriteWidth={character.spriteWidth}
+            spriteHeight={character.spriteHeight}
+            size={portraitSize}
           />
           <p
-            className="font-header text-center text-[10px] sm:text-xs"
+            className="font-body text-center text-xl sm:text-2xl"
             style={{ color: character.accentColor }}
           >
             {character.name}
           </p>
-          <p className="font-body text-center text-lg text-[#a89b7a]">
+          <p className="font-body text-center text-xl text-[#a89b7a] sm:text-2xl">
             {character.tagline}
           </p>
         </div>
@@ -158,6 +154,6 @@ export function DetailScreen({ characterId, onBack }: DetailScreenProps) {
           </p>
         </div>
       </div>
-    </div>
+    </ScreenFrame>
   )
 }

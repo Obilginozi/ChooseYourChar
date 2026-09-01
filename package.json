@@ -8,7 +8,9 @@
     "build": "tsc -b && vite build",
     "generate:portraits": "node scripts/generate-portraits.mjs",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
     "@types/howler": "^2.2.13",
@@ -18,6 +20,7 @@
     "react-router-dom": "^7.18.3"
   },
   "devDependencies": {
+    "@playwright/test": "^1.51.0",
     "@tailwindcss/vite": "^4.3.3",
     "@types/node": "^24.13.3",
     "@types/react": "^19.2.18",
@@ -25,6 +28,7 @@
     "@vitejs/plugin-react": "^4.7.0",
     "oxlint": "^1.79.0",
     "pngjs": "^7.0.0",
+    "sharp": "^0.35.4",
     "tailwindcss": "^4.3.3",
     "typescript": "~6.0.2",
     "vite": "^6.4.3",

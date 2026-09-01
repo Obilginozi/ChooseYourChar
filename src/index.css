@@ -67,6 +67,19 @@ body,
   border: 4px solid var(--color-border);
 }
 
+/* Symmetric inset so centered titles stay visually centered beside SND / CRT */
+.screen-header {
+  padding-left: 5.25rem;
+  padding-right: 5.25rem;
+}
+
+@media (min-width: 640px) {
+  .screen-header {
+    padding-left: 5.75rem;
+    padding-right: 5.75rem;
+  }
+}
+
 @keyframes blink {
   0%,
   49% {
@@ -80,6 +93,67 @@ body,
 
 .animate-blink {
   animation: blink 1s step-end infinite;
+}
+
+@keyframes vs-hurt {
+  0%,
+  100% {
+    filter: brightness(1);
+    transform: translateX(0);
+  }
+  25% {
+    filter: brightness(1.8) sepia(0.4);
+    transform: translateX(-4px);
+  }
+  75% {
+    filter: brightness(1.8) sepia(0.4);
+    transform: translateX(4px);
+  }
+}
+
+@keyframes vs-attack {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.08);
+  }
+}
+
+.vs-fighter-hurt {
+  animation: vs-hurt 0.2s step-end;
+}
+
+.vs-fighter-attack {
+  animation: vs-attack 0.15s ease-out;
+}
+
+@keyframes vs-intro-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+  70% {
+    transform: scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.vs-intro-text {
+  animation: vs-intro-pop 0.4s ease-out;
+  text-shadow:
+    3px 3px 0 #000,
+    -1px -1px 0 #000,
+    1px -1px 0 #000,
+    -1px 1px 0 #000;
 }
 
 @keyframes twinkle {
@@ -110,6 +184,26 @@ body,
   position: fixed;
   inset: 0;
   z-index: 50;
+  overflow: hidden;
+}
+
+.crt-frame {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 49;
+  border-radius: 24px;
+  box-shadow:
+    inset 0 0 80px rgba(0, 0, 0, 0.95),
+    inset 0 0 200px rgba(0, 0, 0, 0.65),
+    inset 0 0 4px rgba(255, 255, 255, 0.08);
+  border: 14px solid #050508;
+  outline: 2px solid rgba(255, 215, 0, 0.15);
+  outline-offset: -16px;
+}
+
+.crt-active {
+  filter: contrast(1.12) saturate(1.15) brightness(1.04);
 }
 
 .crt-overlay::before {
@@ -118,12 +212,13 @@ body,
   inset: 0;
   background: repeating-linear-gradient(
     0deg,
-    rgba(0, 0, 0, 0.15) 0px,
-    rgba(0, 0, 0, 0.15) 1px,
+    rgba(0, 0, 0, 0.38) 0px,
+    rgba(0, 0, 0, 0.38) 1px,
     transparent 1px,
-    transparent 3px
+    transparent 2px
   );
-  opacity: 0.4;
+  opacity: 0.72;
+  mix-blend-mode: multiply;
 }
 
 .crt-overlay::after {
@@ -131,10 +226,50 @@ body,
   position: absolute;
   inset: 0;
   background: radial-gradient(
-    ellipse at center,
-    transparent 50%,
-    rgba(0, 0, 0, 0.6) 100%
+    ellipse 85% 75% at center,
+    transparent 35%,
+    rgba(0, 0, 0, 0.55) 70%,
+    rgba(0, 0, 0, 0.92) 100%
   );
+}
+
+.crt-phosphor {
+  position: absolute;
+  inset: 0;
+  background: rgba(80, 255, 120, 0.04);
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+.crt-scanline-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: linear-gradient(
+    180deg,
+    transparent,
+    rgba(255, 255, 255, 0.06),
+    transparent
+  );
+  animation: scanline-move 6s linear infinite;
+  opacity: 0.85;
+}
+
+.crt-noise {
+  position: absolute;
+  inset: 0;
+  opacity: 0.06;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 128px 128px;
+  mix-blend-mode: overlay;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .crt-scanline-bar {
+    animation: none;
+    opacity: 0.35;
+  }
 }
 
 @keyframes screen-flash {
@@ -211,6 +346,167 @@ body,
 .character-confirm-flash {
   animation: character-confirm-flash 300ms ease-out forwards;
   pointer-events: none;
+}
+
+@keyframes character-enter {
+  0% {
+    opacity: 0;
+    transform: translateY(28px) scale(0.82);
+  }
+  55% {
+    opacity: 1;
+    transform: translateY(-6px) scale(1.04);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.character-enter {
+  animation: character-enter 420ms cubic-bezier(0.22, 1.2, 0.36, 1) forwards;
+}
+
+@keyframes character-idle-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.character-idle {
+  animation: character-idle-bounce 2.4s ease-in-out infinite;
+}
+
+.dialogue-cursor {
+  display: inline-block;
+  margin-left: 2px;
+  color: var(--color-accent);
+  animation: blink 0.8s step-end infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .character-idle {
+    animation: none;
+  }
+}
+
+/* ── Character carousel ─────────────────────────────────────────────────── */
+
+.character-carousel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.character-carousel-viewport {
+  position: relative;
+  overflow: hidden;
+  perspective: 900px;
+}
+
+.character-carousel-slide {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform-style: preserve-3d;
+  will-change: transform, opacity;
+}
+
+.character-carousel-current {
+  position: relative;
+  animation: carousel-settle 320ms ease-out;
+}
+
+@keyframes carousel-settle {
+  0% {
+    transform: translateY(6px) scale(0.97);
+    opacity: 0.85;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes carousel-exit-next {
+  0% {
+    transform: translateX(0) rotateY(0deg) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-115%) rotateY(28deg) scale(0.88);
+    opacity: 0;
+  }
+}
+
+@keyframes carousel-enter-next {
+  0% {
+    transform: translateX(115%) rotateY(-28deg) scale(0.88);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0) rotateY(0deg) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes carousel-exit-prev {
+  0% {
+    transform: translateX(0) rotateY(0deg) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(115%) rotateY(-28deg) scale(0.88);
+    opacity: 0;
+  }
+}
+
+@keyframes carousel-enter-prev {
+  0% {
+    transform: translateX(-115%) rotateY(28deg) scale(0.88);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0) rotateY(0deg) scale(1);
+    opacity: 1;
+  }
+}
+
+.character-carousel-exit-next {
+  animation: carousel-exit-next 400ms cubic-bezier(0.45, 0.05, 0.55, 0.95) forwards;
+  z-index: 1;
+}
+
+.character-carousel-enter-next {
+  animation: carousel-enter-next 400ms cubic-bezier(0.45, 0.05, 0.55, 0.95) forwards;
+  z-index: 2;
+}
+
+.character-carousel-exit-prev {
+  animation: carousel-exit-prev 400ms cubic-bezier(0.45, 0.05, 0.55, 0.95) forwards;
+  z-index: 1;
+}
+
+.character-carousel-enter-prev {
+  animation: carousel-enter-prev 400ms cubic-bezier(0.45, 0.05, 0.55, 0.95) forwards;
+  z-index: 2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .character-carousel-exit-next,
+  .character-carousel-enter-next,
+  .character-carousel-exit-prev,
+  .character-carousel-enter-prev,
+  .character-carousel-current {
+    animation: none !important;
+  }
 }
 
 .dialogue-box {

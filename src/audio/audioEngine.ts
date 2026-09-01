@@ -1,11 +1,12 @@
 type SfxName = 'start' | 'confirm' | 'cursor'
+export type BattleSfxName = 'round' | 'fight' | 'hit' | 'ko'
 
 let audioContext: AudioContext | null = null
 let bgmOscillators: OscillatorNode[] = []
 let bgmGain: GainNode | null = null
 let bgmStep = 0
 let bgmTimer: ReturnType<typeof setInterval> | null = null
-let isMuted = true
+let isMuted = false
 let bgmRunning = false
 
 const BGM_PATTERN = [
@@ -74,6 +75,61 @@ export function playSfx(name: SfxName) {
       playTone(880, 0.04, 0.05, 'triangle')
       break
   }
+}
+
+export function playBattleSfx(name: BattleSfxName) {
+  if (isMuted) return
+
+  switch (name) {
+    case 'round':
+      playTone(98, 0.18, 0.14, 'square')
+      setTimeout(() => playTone(196, 0.1, 0.1, 'triangle'), 120)
+      setTimeout(() => playTone(294, 0.22, 0.15, 'square'), 280)
+      break
+    case 'fight':
+      playTone(130, 0.05, 0.16, 'sawtooth')
+      setTimeout(() => playTone(523, 0.07, 0.13, 'square'), 50)
+      setTimeout(() => playTone(784, 0.24, 0.17, 'square'), 130)
+      break
+    case 'hit':
+      playTone(72, 0.05, 0.2, 'square')
+      setTimeout(() => playTone(145, 0.04, 0.12, 'sawtooth'), 25)
+      setTimeout(() => playTone(90, 0.03, 0.08, 'triangle'), 55)
+      break
+    case 'ko':
+      playTone(494, 0.1, 0.13, 'square')
+      setTimeout(() => playTone(370, 0.1, 0.12), 110)
+      setTimeout(() => playTone(247, 0.18, 0.14), 220)
+      setTimeout(() => playTone(659, 0.08, 0.12), 380)
+      setTimeout(() => playTone(784, 0.22, 0.15), 460)
+      break
+  }
+}
+
+function hashCharacterId(id: string): number {
+  let h = 0
+  for (let i = 0; i < id.length; i++) {
+    h = (h * 31 + id.charCodeAt(i)) | 0
+  }
+  return Math.abs(h)
+}
+
+/** Character-specific confirm jingle — pitch varies by fighter. */
+export function playCharacterConfirm(characterId: string) {
+  if (isMuted) return
+
+  const h = hashCharacterId(characterId)
+  const base = 320 + (h % 180)
+  const steps = [0, 1.25, 1.5, 2]
+  const delays = [0, 55, 110, 170]
+  const type: OscillatorType = h % 2 === 0 ? 'square' : 'triangle'
+
+  steps.forEach((mult, i) => {
+    setTimeout(
+      () => playTone(Math.round(base * mult), i === 3 ? 0.16 : 0.07, 0.11, type),
+      delays[i],
+    )
+  })
 }
 
 function playBgmStep() {

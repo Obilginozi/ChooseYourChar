@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react'
 
-export type GameScreen = 'title' | 'select' | 'detail'
+export type GameScreen = 'title' | 'select' | 'detail' | 'vs' | 'about'
 
 export function useGameScreen() {
   const [screen, setScreen] = useState<GameScreen>('title')
@@ -25,6 +25,8 @@ export function useGameScreen() {
 
   const goToTitle = useCallback(() => navigateTo('title'), [navigateTo])
   const goToSelect = useCallback(() => navigateTo('select'), [navigateTo])
+  const goToVs = useCallback(() => navigateTo('vs'), [navigateTo])
+  const goToAbout = useCallback(() => navigateTo('about'), [navigateTo])
   const goToDetail = useCallback(
     (characterId: string) => {
       setSelectedCharacterId(characterId)
@@ -41,6 +43,8 @@ export function useGameScreen() {
     completeTransition,
     goToTitle,
     goToSelect,
+    goToVs,
+    goToAbout,
     goToDetail,
     setSelectedCharacterId,
   }

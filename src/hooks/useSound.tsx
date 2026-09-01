@@ -8,11 +8,14 @@ import {
   type ReactNode,
 } from 'react'
 import {
+  playBattleSfx as enginePlayBattleSfx,
+  playCharacterConfirm as enginePlayCharacterConfirm,
   playSfx as enginePlaySfx,
   resumeAudio,
   setAudioMuted,
   startBgm,
   stopBgm,
+  type BattleSfxName,
 } from '../audio/audioEngine'
 
 const MUTED_KEY = 'cyc-muted'
@@ -21,10 +24,10 @@ type SfxName = 'start' | 'confirm' | 'cursor'
 
 interface SoundContextValue {
   muted: boolean
-  hasInteracted: boolean
   toggleMute: () => void
-  markInteracted: () => void
   playSfx: (name: SfxName) => void
+  playBattleSfx: (name: BattleSfxName) => void
+  playCharacterConfirm: (characterId: string) => void
 }
 
 const SoundContext = createContext<SoundContextValue | null>(null)
@@ -32,25 +35,37 @@ const SoundContext = createContext<SoundContextValue | null>(null)
 export function SoundProvider({ children }: { children: ReactNode }) {
   const [muted, setMuted] = useState(() => {
     try {
-      return localStorage.getItem(MUTED_KEY) !== 'false'
+      return localStorage.getItem(MUTED_KEY) === 'true'
     } catch {
-      return true
+      return false
     }
   })
-  const [hasInteracted, setHasInteracted] = useState(false)
 
   useEffect(() => {
     setAudioMuted(muted)
-  }, [muted])
 
-  useEffect(() => {
-    if (hasInteracted && !muted) {
+    const tryStartAudio = () => {
+      if (muted) {
+        stopBgm()
+        return
+      }
       resumeAudio().then(() => startBgm())
-    } else {
-      stopBgm()
     }
-    return () => stopBgm()
-  }, [hasInteracted, muted])
+
+    tryStartAudio()
+
+    const unlock = () => tryStartAudio()
+    window.addEventListener('pointerdown', unlock)
+    window.addEventListener('keydown', unlock)
+    window.addEventListener('touchstart', unlock, { passive: true })
+
+    return () => {
+      stopBgm()
+      window.removeEventListener('pointerdown', unlock)
+      window.removeEventListener('keydown', unlock)
+      window.removeEventListener('touchstart', unlock)
+    }
+  }, [muted])
 
   const toggleMute = useCallback(() => {
     setMuted((prev) => {
@@ -65,22 +80,33 @@ export function SoundProvider({ children }: { children: ReactNode }) {
     })
   }, [])
 
-  const markInteracted = useCallback(() => {
-    setHasInteracted(true)
-    resumeAudio()
-  }, [])
-
   const playSfx = useCallback(
     (name: SfxName) => {
-      if (!hasInteracted || muted) return
-      enginePlaySfx(name)
+      if (muted) return
+      resumeAudio().then(() => enginePlaySfx(name))
     },
-    [hasInteracted, muted],
+    [muted],
+  )
+
+  const playBattleSfx = useCallback(
+    (name: BattleSfxName) => {
+      if (muted) return
+      resumeAudio().then(() => enginePlayBattleSfx(name))
+    },
+    [muted],
+  )
+
+  const playCharacterConfirm = useCallback(
+    (characterId: string) => {
+      if (muted) return
+      resumeAudio().then(() => enginePlayCharacterConfirm(characterId))
+    },
+    [muted],
   )
 
   const value = useMemo(
-    () => ({ muted, hasInteracted, toggleMute, markInteracted, playSfx }),
-    [muted, hasInteracted, toggleMute, markInteracted, playSfx],
+    () => ({ muted, toggleMute, playSfx, playBattleSfx, playCharacterConfirm }),
+    [muted, toggleMute, playSfx, playBattleSfx, playCharacterConfirm],
   )
 
   return (

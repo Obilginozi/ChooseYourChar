@@ -1,19 +1,30 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { CharacterShowcase } from '../components/CharacterShowcase'
+import { CharacterStatBars } from '../components/CharacterStatBars'
 import { ConfettiBurst } from '../components/ConfettiBurst'
 import { PixelButton } from '../components/PixelButton'
-import { characters } from '../data/characters'
+import { ScreenFrame } from '../components/ScreenFrame'
+import { characters, getCharacterIndexById } from '../data/characters'
 import { useKeyboardNav } from '../hooks/useKeyboardNav'
 import { useSound } from '../hooks/useSound'
 import { useSwipe } from '../hooks/useSwipe'
+import { getLastCharacterId, setLastCharacterId } from '../lib/lastCharacter'
 
 interface SelectScreenProps {
   onBack: () => void
   onConfirm: (characterId: string) => void
+  onVs: () => void
 }
 
-export function SelectScreen({ onBack, onConfirm }: SelectScreenProps) {
-  const [selectedIndex, setSelectedIndex] = useState(0)
+function resolveInitialIndex(): number {
+  const lastId = getLastCharacterId()
+  if (!lastId) return 0
+  const idx = getCharacterIndexById(lastId)
+  return idx >= 0 ? idx : 0
+}
+
+export function SelectScreen({ onBack, onConfirm, onVs }: SelectScreenProps) {
+  const [selectedIndex, setSelectedIndex] = useState(resolveInitialIndex)
   const [isConfirming, setIsConfirming] = useState(false)
   const [isShaking, setIsShaking] = useState(false)
   const [showConfetti, setShowConfetti] = useState(false)
@@ -21,21 +32,37 @@ export function SelectScreen({ onBack, onConfirm }: SelectScreenProps) {
   const [confettiColors, setConfettiColors] = useState<string[]>(['#FFD700'])
   const portraitRef = useRef<HTMLDivElement>(null)
   const isFirstRender = useRef(true)
-  const { playSfx } = useSound()
+  const { playSfx, playCharacterConfirm } = useSound()
 
   const selectedCharacter = characters[selectedIndex]
+  const pinnedId = getLastCharacterId()
 
   const handleSelect = useCallback((index: number) => {
     setSelectedIndex(index)
+    const c = characters[index]
+    if (c) setLastCharacterId(c.id)
   }, [])
 
   const goToPrev = useCallback(() => {
-    setSelectedIndex((i) => Math.max(0, i - 1))
-  }, [])
+    handleSelect(Math.max(0, selectedIndex - 1))
+  }, [handleSelect, selectedIndex])
 
   const goToNext = useCallback(() => {
-    setSelectedIndex((i) => Math.min(characters.length - 1, i + 1))
-  }, [])
+    handleSelect(Math.min(characters.length - 1, selectedIndex + 1))
+  }, [handleSelect, selectedIndex])
+
+  const handleRandom = useCallback(() => {
+    if (isConfirming || characters.length === 0) return
+    if (characters.length === 1) {
+      handleSelect(0)
+      return
+    }
+    let next = selectedIndex
+    while (next === selectedIndex) {
+      next = Math.floor(Math.random() * characters.length)
+    }
+    handleSelect(next)
+  }, [isConfirming, selectedIndex, handleSelect])
 
   const swipeHandlers = useSwipe({
     onSwipeLeft: goToNext,
@@ -55,6 +82,9 @@ export function SelectScreen({ onBack, onConfirm }: SelectScreenProps) {
       if (isConfirming) return
       const character = characters[index]
       if (!character) return
+
+      setLastCharacterId(character.id)
+      playCharacterConfirm(character.id)
 
       const el = portraitRef.current
       if (el) {
@@ -79,8 +109,22 @@ export function SelectScreen({ onBack, onConfirm }: SelectScreenProps) {
       setTimeout(() => onConfirm(character.id), 450)
       setTimeout(() => setIsShaking(false), 250)
     },
-    [isConfirming, onConfirm],
+    [isConfirming, onConfirm, playCharacterConfirm],
   )
+
+  useEffect(() => {
+    if (isConfirming) return
+
+    const handleRandomKey = (e: KeyboardEvent) => {
+      if (e.key === 'r' || e.key === 'R') {
+        e.preventDefault()
+        handleRandom()
+      }
+    }
+
+    window.addEventListener('keydown', handleRandomKey)
+    return () => window.removeEventListener('keydown', handleRandomKey)
+  }, [isConfirming, handleRandom])
 
   useKeyboardNav({
     itemCount: characters.length,
@@ -93,78 +137,92 @@ export function SelectScreen({ onBack, onConfirm }: SelectScreenProps) {
   })
 
   return (
-    <div
-      className={`relative flex min-h-dvh flex-col p-4 ${isShaking ? 'screen-shake' : ''}`}
-      style={{
-        paddingTop: 'max(1rem, env(safe-area-inset-top))',
-        paddingBottom: 'max(1rem, env(safe-area-inset-bottom))',
-      }}
+    <ScreenFrame
+      className={isShaking ? 'screen-shake' : ''}
       onTouchStart={swipeHandlers.onTouchStart}
       onTouchEnd={swipeHandlers.onTouchEnd}
     >
-      <div
-        className="pointer-events-none absolute inset-4 pixel-border"
-        style={{ borderColor: '#FFD700' }}
-        aria-hidden="true"
-      />
-
-      <header className="relative z-10 mb-2 text-center">
+      <header className="screen-header relative z-10 mt-2 mb-1 text-center sm:mt-4">
         <h1
           className="font-header text-xs sm:text-sm"
           style={{ color: '#FFD700' }}
         >
-          KARAKTER SEÇ
+          SELECT CHARACTER
         </h1>
+        {pinnedId && selectedCharacter?.id === pinnedId && (
+          <p className="font-body mt-0.5 text-xs text-[#1ABC9C]">★ LAST PICK</p>
+        )}
       </header>
 
-      <div className="relative z-10 flex flex-1 flex-col items-center justify-center gap-4">
+      <div className="relative z-10 flex flex-1 flex-col items-center justify-center gap-2 sm:gap-3">
         <CharacterShowcase
           characters={characters}
           selectedIndex={selectedIndex}
           isConfirming={isConfirming}
-          onPrev={goToPrev}
-          onNext={goToNext}
           onSelect={handleSelect}
           portraitRef={portraitRef}
         />
 
         {selectedCharacter && (
           <div
-            className="w-full max-w-2xl px-3 py-3 text-center"
+            className="flex w-full max-w-2xl flex-col items-center gap-1.5 px-2 py-2 sm:px-3"
             style={{
               borderTop: `2px solid ${selectedCharacter.accentColor}`,
               borderBottom: `2px solid ${selectedCharacter.accentColor}`,
               backgroundColor: '#1a1a2e',
             }}
           >
-            <p
-              className="font-header mb-2 text-[10px] sm:text-sm"
-              style={{ color: selectedCharacter.accentColor }}
-            >
-              {selectedCharacter.name}
-            </p>
-            <p className="font-body text-xl leading-snug text-[#F5E6C8] sm:text-2xl">
+            <div className="flex w-full max-w-md flex-col items-center gap-1.5 sm:flex-row sm:justify-between sm:gap-3">
+              <p
+                className="font-body shrink-0 text-lg sm:text-xl"
+                style={{ color: selectedCharacter.accentColor }}
+              >
+                {selectedCharacter.name}
+              </p>
+              <CharacterStatBars
+                stats={selectedCharacter.stats}
+                accentColor={selectedCharacter.accentColor}
+              />
+            </div>
+            <p className="font-body text-center text-base leading-snug text-[#F5E6C8] sm:text-lg">
               {selectedCharacter.tagline}
             </p>
           </div>
         )}
       </div>
 
-      <footer className="relative z-10 mt-3 flex flex-wrap items-center justify-center gap-3">
+      <footer className="relative z-10 mt-2 flex flex-wrap items-center justify-center gap-2 sm:gap-3">
         <PixelButton
           onClick={() => handleConfirm(selectedIndex)}
           disabled={isConfirming}
-          accentColor={selectedCharacter?.accentColor}
         >
-          ONAYLA
+          CONFIRM
+        </PixelButton>
+        <PixelButton
+          onClick={handleRandom}
+          variant="secondary"
+          disabled={isConfirming}
+          aria-label="Pick random character"
+        >
+          RANDOM
+        </PixelButton>
+        <PixelButton
+          onClick={onVs}
+          variant="secondary"
+          disabled={isConfirming}
+        >
+          VS
         </PixelButton>
         <PixelButton onClick={onBack} variant="secondary" disabled={isConfirming}>
-          GERİ
+          BACK
         </PixelButton>
       </footer>
 
+      <p className="relative z-10 mt-1 text-center font-body text-sm text-[#a89b7a] sm:hidden">
+        Tap dots or swipe · RANDOM picks for you
+      </p>
       <p className="relative z-10 mt-2 hidden text-center font-body text-base text-[#a89b7a] sm:block">
-        ← → change character · Enter confirm · Esc back
+        ← → change · Enter confirm · R random · Esc back
       </p>
 
       <ConfettiBurst
@@ -174,6 +232,6 @@ export function SelectScreen({ onBack, onConfirm }: SelectScreenProps) {
         originY={confettiOrigin.y}
         onComplete={() => setShowConfetti(false)}
       />
-    </div>
+    </ScreenFrame>
   )
 }
