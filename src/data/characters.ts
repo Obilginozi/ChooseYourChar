@@ -126,6 +126,20 @@ export const characters: Character[] = [
     ],
   }),
   char({
+    id: 'fotografci',
+    name: 'Fotoğrafçı Ouzan',
+    tagline: 'Bir kare daha. Sonra bir kere daha.',
+    accentColor: '#5B7C99',
+    spriteSrc: `${base}assets/characters/fotografci.png`,
+    stats: { hp: 76, atk: 68, spd: 88 },
+    jokes: [
+      'Yusuf Güney ile fotoğrafını ben çekmek isterdim.',
+      'Kocam çok güzel fotoğraflar çeker inş diyordun pratik yapıyorum laik olmak için.',
+      'Kadrajda sen yoksan eğer manzara fotoğrafları güzel çıkmıyor.',
+      'Çektiğim fotoğraflar sıcak bastırabilir dikkat et bebeğim.',
+    ],
+  }),
+  char({
     id: 'sair',
     name: 'Şair Ouzan',
     tagline: 'Uçmasak da yükseğiz bir oluruz...',
